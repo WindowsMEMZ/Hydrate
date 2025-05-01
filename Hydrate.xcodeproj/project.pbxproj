@@ -1,0 +1,531 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		8C39621F2DC2225600372D10 /* ASMROneApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C39621B2DC2225600372D10 /* ASMROneApp.swift */; };
+		8C3962202DC2225600372D10 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C39621D2DC2225600372D10 /* ContentView.swift */; };
+		8C3962222DC2225600372D10 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8C39621C2DC2225600372D10 /* Assets.xcassets */; };
+		8C3962252DC2244400372D10 /* DarockFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 8C3962242DC2244400372D10 /* DarockFoundation */; };
+		8C3962282DC2244D00372D10 /* DarockUI in Frameworks */ = {isa = PBXBuildFile; productRef = 8C3962272DC2244D00372D10 /* DarockUI */; };
+		8C39622B2DC2246C00372D10 /* NotifKit in Frameworks */ = {isa = PBXBuildFile; productRef = 8C39622A2DC2246C00372D10 /* NotifKit */; };
+		8CD0E1912DC2266400997186 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD0E1902DC2266200997186 /* HomeView.swift */; };
+		8CD0E1932DC2272800997186 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD0E1922DC2272600997186 /* Models.swift */; };
+		8CD0E1952DC232A300997186 /* WorkDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD0E1942DC2329F00997186 /* WorkDetailView.swift */; };
+		8CD0E1982DC234AB00997186 /* CachedAsyncImage in Frameworks */ = {isa = PBXBuildFile; productRef = 8CD0E1972DC234AB00997186 /* CachedAsyncImage */; };
+		8CD0E19B2DC23B7000997186 /* SwiftUIIntrospect in Frameworks */ = {isa = PBXBuildFile; productRef = 8CD0E19A2DC23B7000997186 /* SwiftUIIntrospect */; };
+		8CD0E19D2DC2447600997186 /* NowPlayingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD0E19C2DC2446E00997186 /* NowPlayingView.swift */; };
+		8CD0E1A02DC245FF00997186 /* AVPlayer+PeriodicTimePublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD0E19F2DC245FF00997186 /* AVPlayer+PeriodicTimePublisher.swift */; };
+		8CD0E1A22DC24ADF00997186 /* ClosedRange+.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD0E1A12DC24ADA00997186 /* ClosedRange+.swift */; };
+		8CD0E1A52DC24E4D00997186 /* BottomSheet in Frameworks */ = {isa = PBXBuildFile; productRef = 8CD0E1A42DC24E4D00997186 /* BottomSheet */; };
+		8CD0E1A72DC24F6000997186 /* LyricParsers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD0E1A62DC24F5B00997186 /* LyricParsers.swift */; };
+		8CD0E1C92DC26DA200997186 /* MarqueeText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD0E1C82DC26DA200997186 /* MarqueeText.swift */; };
+		8CD0E1CB2DC27B0E00997186 /* SearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD0E1CA2DC27B0A00997186 /* SearchView.swift */; };
+		8CD0E1CD2DC3220C00997186 /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD0E1CC2DC3220800997186 /* LibraryView.swift */; };
+		8CD0E1CF2DC3225900997186 /* AccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD0E1CE2DC3225600997186 /* AccountView.swift */; };
+		8CD0E1D12DC325FD00997186 /* GlobalProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD0E1D02DC325F900997186 /* GlobalProperties.swift */; };
+		8CD0E1D32DC3286100997186 /* StarButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD0E1D22DC3285E00997186 /* StarButton.swift */; };
+		8CD0E1D52DC33A2900997186 /* String+.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD0E1D42DC33A2700997186 /* String+.swift */; };
+		8CD0E1D72DC33EEC00997186 /* Combine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD0E1D62DC33EEA00997186 /* Combine.swift */; };
+		8CD0E1DD2DC3B07400997186 /* UIRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD0E1DC2DC3B06900997186 /* UIRepresentable.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		8C3962082DC2220400372D10 /* Hydrate.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Hydrate.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8C39621B2DC2225600372D10 /* ASMROneApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASMROneApp.swift; sourceTree = "<group>"; };
+		8C39621C2DC2225600372D10 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		8C39621D2DC2225600372D10 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		8CD0E1902DC2266200997186 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		8CD0E1922DC2272600997186 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		8CD0E1942DC2329F00997186 /* WorkDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkDetailView.swift; sourceTree = "<group>"; };
+		8CD0E19C2DC2446E00997186 /* NowPlayingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingView.swift; sourceTree = "<group>"; };
+		8CD0E19F2DC245FF00997186 /* AVPlayer+PeriodicTimePublisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AVPlayer+PeriodicTimePublisher.swift"; sourceTree = "<group>"; };
+		8CD0E1A12DC24ADA00997186 /* ClosedRange+.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ClosedRange+.swift"; sourceTree = "<group>"; };
+		8CD0E1A62DC24F5B00997186 /* LyricParsers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricParsers.swift; sourceTree = "<group>"; };
+		8CD0E1C22DC26B8500997186 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		8CD0E1C82DC26DA200997186 /* MarqueeText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarqueeText.swift; sourceTree = "<group>"; };
+		8CD0E1CA2DC27B0A00997186 /* SearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchView.swift; sourceTree = "<group>"; };
+		8CD0E1CC2DC3220800997186 /* LibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryView.swift; sourceTree = "<group>"; };
+		8CD0E1CE2DC3225600997186 /* AccountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountView.swift; sourceTree = "<group>"; };
+		8CD0E1D02DC325F900997186 /* GlobalProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalProperties.swift; sourceTree = "<group>"; };
+		8CD0E1D22DC3285E00997186 /* StarButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StarButton.swift; sourceTree = "<group>"; };
+		8CD0E1D42DC33A2700997186 /* String+.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+.swift"; sourceTree = "<group>"; };
+		8CD0E1D62DC33EEA00997186 /* Combine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Combine.swift; sourceTree = "<group>"; };
+		8CD0E1DC2DC3B06900997186 /* UIRepresentable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIRepresentable.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		8C3962052DC2220400372D10 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8C39622B2DC2246C00372D10 /* NotifKit in Frameworks */,
+				8CD0E1A52DC24E4D00997186 /* BottomSheet in Frameworks */,
+				8CD0E1982DC234AB00997186 /* CachedAsyncImage in Frameworks */,
+				8C3962282DC2244D00372D10 /* DarockUI in Frameworks */,
+				8CD0E19B2DC23B7000997186 /* SwiftUIIntrospect in Frameworks */,
+				8C3962252DC2244400372D10 /* DarockFoundation in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		8C3961FF2DC2220400372D10 = {
+			isa = PBXGroup;
+			children = (
+				8C39621E2DC2225600372D10 /* Hydrate */,
+				8C3962092DC2220400372D10 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		8C3962092DC2220400372D10 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				8C3962082DC2220400372D10 /* Hydrate.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		8C39621E2DC2225600372D10 /* Hydrate */ = {
+			isa = PBXGroup;
+			children = (
+				8CD0E1C22DC26B8500997186 /* Info.plist */,
+				8CD0E1922DC2272600997186 /* Models.swift */,
+				8CD0E1D62DC33EEA00997186 /* Combine.swift */,
+				8CD0E1D02DC325F900997186 /* GlobalProperties.swift */,
+				8CD0E19E2DC245F600997186 /* Extensions */,
+				8C39621B2DC2225600372D10 /* ASMROneApp.swift */,
+				8CD0E1A62DC24F5B00997186 /* LyricParsers.swift */,
+				8C39621D2DC2225600372D10 /* ContentView.swift */,
+				8CD0E1902DC2266200997186 /* HomeView.swift */,
+				8CD0E1CC2DC3220800997186 /* LibraryView.swift */,
+				8CD0E1CA2DC27B0A00997186 /* SearchView.swift */,
+				8CD0E1CE2DC3225600997186 /* AccountView.swift */,
+				8CD0E1942DC2329F00997186 /* WorkDetailView.swift */,
+				8CD0E19C2DC2446E00997186 /* NowPlayingView.swift */,
+				8C39621C2DC2225600372D10 /* Assets.xcassets */,
+			);
+			path = Hydrate;
+			sourceTree = "<group>";
+		};
+		8CD0E19E2DC245F600997186 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				8CD0E1DC2DC3B06900997186 /* UIRepresentable.swift */,
+				8CD0E1D22DC3285E00997186 /* StarButton.swift */,
+				8CD0E1C82DC26DA200997186 /* MarqueeText.swift */,
+				8CD0E1D42DC33A2700997186 /* String+.swift */,
+				8CD0E1A12DC24ADA00997186 /* ClosedRange+.swift */,
+				8CD0E19F2DC245FF00997186 /* AVPlayer+PeriodicTimePublisher.swift */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		8C3962072DC2220400372D10 /* Hydrate */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8C3962162DC2220600372D10 /* Build configuration list for PBXNativeTarget "Hydrate" */;
+			buildPhases = (
+				8C3962042DC2220400372D10 /* Sources */,
+				8C3962052DC2220400372D10 /* Frameworks */,
+				8C3962062DC2220400372D10 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Hydrate;
+			packageProductDependencies = (
+				8C3962242DC2244400372D10 /* DarockFoundation */,
+				8C3962272DC2244D00372D10 /* DarockUI */,
+				8C39622A2DC2246C00372D10 /* NotifKit */,
+				8CD0E1972DC234AB00997186 /* CachedAsyncImage */,
+				8CD0E19A2DC23B7000997186 /* SwiftUIIntrospect */,
+				8CD0E1A42DC24E4D00997186 /* BottomSheet */,
+			);
+			productName = ASMROne;
+			productReference = 8C3962082DC2220400372D10 /* Hydrate.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		8C3962002DC2220400372D10 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1620;
+				LastUpgradeCheck = 1620;
+				TargetAttributes = {
+					8C3962072DC2220400372D10 = {
+						CreatedOnToolsVersion = 16.2;
+					};
+				};
+			};
+			buildConfigurationList = 8C3962032DC2220400372D10 /* Build configuration list for PBXProject "Hydrate" */;
+			developmentRegion = "zh-Hans";
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+				"zh-Hans",
+			);
+			mainGroup = 8C3961FF2DC2220400372D10;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				8C3962232DC2244400372D10 /* XCRemoteSwiftPackageReference "DarockFoundation" */,
+				8C3962262DC2244D00372D10 /* XCRemoteSwiftPackageReference "DarockUI" */,
+				8C3962292DC2246C00372D10 /* XCRemoteSwiftPackageReference "NotifKit" */,
+				8CD0E1962DC234AB00997186 /* XCRemoteSwiftPackageReference "swiftui-cached-async-image" */,
+				8CD0E1992DC23B7000997186 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */,
+				8CD0E1A32DC24E4D00997186 /* XCRemoteSwiftPackageReference "BottomSheet" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 8C3962092DC2220400372D10 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				8C3962072DC2220400372D10 /* Hydrate */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		8C3962062DC2220400372D10 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8C3962222DC2225600372D10 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		8C3962042DC2220400372D10 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8CD0E1D32DC3286100997186 /* StarButton.swift in Sources */,
+				8CD0E19D2DC2447600997186 /* NowPlayingView.swift in Sources */,
+				8CD0E1DD2DC3B07400997186 /* UIRepresentable.swift in Sources */,
+				8CD0E1A72DC24F6000997186 /* LyricParsers.swift in Sources */,
+				8CD0E1952DC232A300997186 /* WorkDetailView.swift in Sources */,
+				8CD0E1D12DC325FD00997186 /* GlobalProperties.swift in Sources */,
+				8CD0E1912DC2266400997186 /* HomeView.swift in Sources */,
+				8CD0E1CD2DC3220C00997186 /* LibraryView.swift in Sources */,
+				8C39621F2DC2225600372D10 /* ASMROneApp.swift in Sources */,
+				8C3962202DC2225600372D10 /* ContentView.swift in Sources */,
+				8CD0E1932DC2272800997186 /* Models.swift in Sources */,
+				8CD0E1D52DC33A2900997186 /* String+.swift in Sources */,
+				8CD0E1C92DC26DA200997186 /* MarqueeText.swift in Sources */,
+				8CD0E1D72DC33EEC00997186 /* Combine.swift in Sources */,
+				8CD0E1A02DC245FF00997186 /* AVPlayer+PeriodicTimePublisher.swift in Sources */,
+				8CD0E1A22DC24ADF00997186 /* ClosedRange+.swift in Sources */,
+				8CD0E1CF2DC3225900997186 /* AccountView.swift in Sources */,
+				8CD0E1CB2DC27B0E00997186 /* SearchView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		8C3962142DC2220600372D10 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		8C3962152DC2220600372D10 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		8C3962172DC2220600372D10 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = B57D8PP775;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Hydrate/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Hydrate;
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "向相册中存储图片";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.memz233.ASMROne;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		8C3962182DC2220600372D10 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = B57D8PP775;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Hydrate/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Hydrate;
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "向相册中存储图片";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.memz233.ASMROne;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		8C3962032DC2220400372D10 /* Build configuration list for PBXProject "Hydrate" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8C3962142DC2220600372D10 /* Debug */,
+				8C3962152DC2220600372D10 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		8C3962162DC2220600372D10 /* Build configuration list for PBXNativeTarget "Hydrate" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8C3962172DC2220600372D10 /* Debug */,
+				8C3962182DC2220600372D10 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		8C3962232DC2244400372D10 /* XCRemoteSwiftPackageReference "DarockFoundation" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Darock-Studio/DarockFoundation";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+		8C3962262DC2244D00372D10 /* XCRemoteSwiftPackageReference "DarockUI" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Darock-Studio/DarockUI";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+		8C3962292DC2246C00372D10 /* XCRemoteSwiftPackageReference "NotifKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Darock-Studio/NotifKit";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+		8CD0E1962DC234AB00997186 /* XCRemoteSwiftPackageReference "swiftui-cached-async-image" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/lorenzofiamingo/swiftui-cached-async-image";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.1.1;
+			};
+		};
+		8CD0E1992DC23B7000997186 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/siteline/SwiftUI-Introspect";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.3.0;
+			};
+		};
+		8CD0E1A32DC24E4D00997186 /* XCRemoteSwiftPackageReference "BottomSheet" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/lucaszischka/BottomSheet";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.1.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		8C3962242DC2244400372D10 /* DarockFoundation */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8C3962232DC2244400372D10 /* XCRemoteSwiftPackageReference "DarockFoundation" */;
+			productName = DarockFoundation;
+		};
+		8C3962272DC2244D00372D10 /* DarockUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8C3962262DC2244D00372D10 /* XCRemoteSwiftPackageReference "DarockUI" */;
+			productName = DarockUI;
+		};
+		8C39622A2DC2246C00372D10 /* NotifKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8C3962292DC2246C00372D10 /* XCRemoteSwiftPackageReference "NotifKit" */;
+			productName = NotifKit;
+		};
+		8CD0E1972DC234AB00997186 /* CachedAsyncImage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8CD0E1962DC234AB00997186 /* XCRemoteSwiftPackageReference "swiftui-cached-async-image" */;
+			productName = CachedAsyncImage;
+		};
+		8CD0E19A2DC23B7000997186 /* SwiftUIIntrospect */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8CD0E1992DC23B7000997186 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */;
+			productName = SwiftUIIntrospect;
+		};
+		8CD0E1A42DC24E4D00997186 /* BottomSheet */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8CD0E1A32DC24E4D00997186 /* XCRemoteSwiftPackageReference "BottomSheet" */;
+			productName = BottomSheet;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 8C3962002DC2220400372D10 /* Project object */;
+}
