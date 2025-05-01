@@ -56,6 +56,7 @@
 		8CD0E1D42DC33A2700997186 /* String+.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+.swift"; sourceTree = "<group>"; };
 		8CD0E1D62DC33EEA00997186 /* Combine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Combine.swift; sourceTree = "<group>"; };
 		8CD0E1DC2DC3B06900997186 /* UIRepresentable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIRepresentable.swift; sourceTree = "<group>"; };
+		8CD0E1DE2DC3DF5400997186 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -78,6 +79,7 @@
 		8C3961FF2DC2220400372D10 = {
 			isa = PBXGroup;
 			children = (
+				8CD0E1DE2DC3DF5400997186 /* README.md */,
 				8C39621E2DC2225600372D10 /* Hydrate */,
 				8C3962092DC2220400372D10 /* Products */,
 			);
