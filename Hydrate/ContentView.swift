@@ -128,7 +128,7 @@ struct ContentView: View {
                     .frame(width: 36, height: 5)
                     .centerAligned()
                     .allowsHitTesting(false)
-                HStack {
+                HStack(spacing: 5) {
                     if let nowPlayingWork {
                         CachedAsyncImage(url: URL(string: nowPlayingWork.mainCoverUrl)) { image in
                             image.resizable()
@@ -143,9 +143,18 @@ struct ContentView: View {
                         .cornerRadius(6)
                         VStack(alignment: .leading, spacing: 3) {
                             MarqueeText(text: nowPlayingWork.title, font: .systemFont(ofSize: 14, weight: .semibold), leftFade: 4, rightFade: 4, startDelay: 4, alignment: .leading)
-                            Text(nowPlayingWork.vas.map { $0.name }.joined(separator: "/"))
-                                .font(.system(size: 14))
-                                .opacity(0.6)
+                            Menu(nowPlayingWork.vas.map { $0.name }.joined(separator: "/")) {
+                                ForEach(nowPlayingWork.vas, id: \.self) { va in
+                                    Button(action: {
+                                        performSearchSubject.send("$va:\(va.name)$")
+                                    }, label: {
+                                        Label(va.name, systemImage: "magnifyingglass")
+                                    })
+                                }
+                            }
+                            .font(.system(size: 14))
+                            .foregroundStyle(.white)
+                            .opacity(0.6)
                         }
                         if !accountToken.isEmpty {
                             StarButton(isStarred: $isNowPlayingStarred) {
@@ -157,6 +166,18 @@ struct ContentView: View {
                                 isNowPlayingStarred.toggle()
                             }
                         }
+                        Menu {
+                            nowPlayingWork.contextActions
+                        } label: {
+                            Image(systemName: "ellipsis")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundStyle(.white)
+                                .padding(6)
+                        }
+                        .menuStyle(.button)
+                        .buttonStyle(.bordered)
+                        .buttonBorderShape(.circle)
+                        .padding(.horizontal, -10)
                     }
                 }
             }

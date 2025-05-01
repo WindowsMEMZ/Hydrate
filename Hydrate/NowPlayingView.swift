@@ -160,7 +160,6 @@ struct NowPlayingView: View {
                         }
                     } else {
                         Text("文本不可用")
-                            .offset(y: -20)
                     }
                     // Audio Controls
                     VStack {

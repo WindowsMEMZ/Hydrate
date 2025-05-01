@@ -62,6 +62,11 @@ struct LibraryView: View {
                                             .frame(width: 160)
                                         }
                                         .scrollTargetLayout()
+                                        .contextMenu {
+                                            work.contextActions
+                                        } preview: {
+                                            work.previewView
+                                        }
                                     }
                                 }
                             }
@@ -125,6 +130,11 @@ struct LibraryView: View {
                                     .foregroundStyle(.gray)
                             }
                         }
+                    }
+                    .contextMenu {
+                        work.contextActions
+                    } preview: {
+                        work.previewView
                     }
                     .onAppear {
                         if work.id == favoriteWorks.last?.id && !isLoadingMore && currentPage <= totalPage {

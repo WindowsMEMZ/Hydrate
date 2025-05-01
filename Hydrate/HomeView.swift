@@ -57,6 +57,11 @@ struct HomeView: View {
                                     .frame(width: 160)
                                 }
                                 .scrollTargetLayout()
+                                .contextMenu {
+                                    work.contextActions
+                                } preview: {
+                                    work.previewView
+                                }
                             }
                         }
                     }
@@ -99,6 +104,11 @@ struct HomeView: View {
                                         .lineLimit(1)
                                         .foregroundStyle(.gray)
                                 }
+                            }
+                            .contextMenu {
+                                work.contextActions
+                            } preview: {
+                                work.previewView
                             }
                             .onAppear {
                                 if work.id == allWorks.last?.id && !isLoadingMore && currentPage <= totalPage {

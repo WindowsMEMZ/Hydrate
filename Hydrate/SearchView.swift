@@ -47,6 +47,11 @@ struct SearchView: View {
                         }
                     }
                 }
+                .contextMenu {
+                    work.contextActions
+                } preview: {
+                    work.previewView
+                }
                 .onAppear {
                     if work.id == searchResults.last?.id && !isLoadingMore && currentPage <= totalPage {
                         loadMore()
@@ -103,17 +108,25 @@ struct SearchView: View {
                 Label("搜索包含“\(searchText)”标签的作品", systemImage: "tag").searchCompletion(SearchToken.tag(searchText))
                 Label("搜索“\(searchText)”社团的作品", systemImage: "person.3").searchCompletion(SearchToken.circle(searchText))
                 Label("搜索“\(searchText)”声优的作品", systemImage: "person").searchCompletion(SearchToken.va(searchText))
-                Label("搜索时长大于“\(searchText)”的作品", systemImage: "clock").searchCompletion(SearchToken.duration(searchText))
-                Label("搜索评分高于“\(searchText)”的作品", systemImage: "star.leadinghalf.filled").searchCompletion(SearchToken.rate(searchText))
-                Label("搜索价格高于“\(searchText)”的作品", systemImage: "dollarsign").searchCompletion(SearchToken.price(searchText))
-                Label("搜索销量大于“\(searchText)”的作品", systemImage: "checkmark.rectangle.stack").searchCompletion(SearchToken.sell(searchText))
-                Label("搜索年龄分级为“\(searchText)”的作品", systemImage: "figure.and.child.holdinghands").searchCompletion(SearchToken.age(searchText))
+                if searchText.hasSuffix("m") || searchText.hasSuffix("h") {
+                    Label("搜索时长大于“\(searchText)”的作品", systemImage: "clock").searchCompletion(SearchToken.duration(searchText))
+                    Label("搜索时长小于“\(searchText)”的作品", systemImage: "clock.badge.questionmark").searchCompletion(SearchToken.antiDuration(searchText))
+                }
+                if let _rate = Double(searchText), _rate >= 0 && _rate <= 5 {
+                    Label("搜索评分高于\(searchText)的作品", systemImage: "star.leadinghalf.filled").searchCompletion(SearchToken.rate(searchText))
+                }
+                if Int(searchText) != nil {
+                    Label("搜索价格高于\(searchText)的作品", systemImage: "dollarsign").searchCompletion(SearchToken.price(searchText))
+                    Label("搜索销量大于\(searchText)的作品", systemImage: "checkmark.rectangle.stack").searchCompletion(SearchToken.sell(searchText))
+                }
+                if ["general", "r15", "adult"].contains(searchText) {
+                    Label("搜索年龄分级为“\(searchText)”的作品", systemImage: "figure.and.child.holdinghands").searchCompletion(SearchToken.age(searchText))
+                    Label("排除年龄分级为“\(searchText)”的作品", systemImage: "figure.child.and.lock").searchCompletion(SearchToken.antiAge(searchText))
+                }
                 Label("搜索语言为“\(searchText)”的作品", systemImage: "globe").searchCompletion(SearchToken.lang(searchText))
                 Label("排除包含“\(searchText)”标签的作品", systemImage: "tag.slash").searchCompletion(SearchToken.antiTag(searchText))
-                Label("搜索时长小于“\(searchText)”的作品", systemImage: "clock.badge.questionmark").searchCompletion(SearchToken.antiDuration(searchText))
                 Label("排除“\(searchText)”社团的作品", systemImage: "person.2.slash").searchCompletion(SearchToken.antiCircle(searchText))
                 Label("排除“\(searchText)”声优的作品", systemImage: "person.slash").searchCompletion(SearchToken.antiVA(searchText))
-                Label("排除年龄分级为“\(searchText)”的作品", systemImage: "figure.child.and.lock").searchCompletion(SearchToken.antiAge(searchText))
                 Label("排除语言为“\(searchText)”的作品", systemImage: "globe.badge.chevron.backward").searchCompletion(SearchToken.antiLang(searchText))
             }
         }

@@ -15,6 +15,7 @@ import DarockFoundation
 
 struct WorkDetailView: View {
     var id: Int
+    @Namespace var ralatedWorkNavigationNamespace
     @AppStorage("AccountToken") var accountToken = ""
     @State var work: Work?
     @State var tracks: [TrackStructure]?
@@ -23,7 +24,10 @@ struct WorkDetailView: View {
     @State var textFileURLPresentation: String?
     @State var textFilePresentationContent: String?
     @State var imageFileURLPresentation: String?
-    @State var isRemoveFromFavoriteConfirmationPresented = false
+    @State var workTitleHeight: CGFloat = 0
+    @State var scrollObservation: NSKeyValueObservation?
+    @State var isShowingNavigationTitle = false
+    @State var relatedWorks = [Work]()
     var body: some View {
         ScrollView {
             if let work {
@@ -43,26 +47,52 @@ struct WorkDetailView: View {
                     Text(work.title)
                         .font(.system(size: 16, weight: .semibold))
                         .multilineTextAlignment(.center)
-                        .padding([.top, .horizontal])
-                    if work.vas.count == 1 {
-                        Button(action: {
-                            performSearchSubject.send("$va:\(work.vas[0].name)$")
-                        }, label: {
-                            Text(work.vas[0].name)
-                                .font(.system(size: 16))
-                        })
-                    } else if work.vas.count > 1 {
-                        Menu(work.vas.map { $0.name }.joined(separator: "/")) {
-                            ForEach(work.vas, id: \.self) { va in
-                                Button(action: {
-                                    performSearchSubject.send("$va:\(va.name)$")
-                                }, label: {
-                                    Text(va.name)
-                                        .font(.system(size: 16))
-                                })
+                        .background {
+                            GeometryReader { geometry in
+                                Color.clear
+                                    .onAppear {
+                                        workTitleHeight = geometry.size.height
+                                    }
                             }
                         }
+                        .padding([.top, .horizontal])
+                    Group {
+                        if work.vas.count == 1 {
+                            Button(action: {
+                                performSearchSubject.send("$va:\(work.vas[0].name)$")
+                            }, label: {
+                                Text(work.vas[0].name)
+                                    .font(.system(size: 16))
+                            })
+                        } else if work.vas.count > 1 {
+                            Menu(work.vas.map { $0.name }.joined(separator: "/")) {
+                                ForEach(work.vas, id: \.self) { va in
+                                    Button(action: {
+                                        performSearchSubject.send("$va:\(va.name)$")
+                                    }, label: {
+                                        Label(va.name, systemImage: "magnifyingglass")
+                                    })
+                                }
+                            }
+                            .multilineTextAlignment(.center)
+                        }
                     }
+                    .padding(.vertical, 5)
+                    Menu {
+                        ForEach(work.tags, id: \.self) { tag in
+                            Button(action: {
+                                performSearchSubject.send("$tag:\(tag.name)$")
+                            }, label: {
+                                Label(tag.name, systemImage: "magnifyingglass")
+                            })
+                        }
+                    } label: {
+                        Text(work.tags.map(\.name).joined(separator: " · "))
+                            .font(.system(size: 11, weight: .semibold))
+                            .multilineTextAlignment(.center)
+                            .foregroundStyle(.gray)
+                    }
+                    .padding([.bottom, .horizontal])
                     if let tracks {
                         List(tracks, id: \.self, children: \.children) { track in
                             switch track.type {
@@ -74,13 +104,13 @@ struct WorkDetailView: View {
                                         var lyrics: [ClosedRange<Double>: String]?
                                         let allFiles = tracks.flattened
                                         for file in allFiles {
-                                            if file.title == "\(track.title).vtt" {
+                                            if file.title == "\(track.title).vtt" || file.title == "\(track.title.dropLast(4)).vtt" {
                                                 let result = await requestString(file.mediaStreamUrl!)
                                                 if case let .success(respStr) = result {
                                                     lyrics = parseVTT(respStr)
                                                 }
                                                 break
-                                            } else if file.title == "\(track.title).lrc" {
+                                            } else if file.title == "\(track.title).lrc" || file.title == "\(track.title.dropLast(4)).lrc" {
                                                 let result = await requestString(file.mediaStreamUrl!)
                                                 if case let .success(respStr) = result {
                                                     lyrics = parseLRC(respStr)
@@ -88,7 +118,7 @@ struct WorkDetailView: View {
                                                 break
                                             }
                                         }
-                                        nowPlayingMedia.send(.init(sourceWork: work, playURL: track.mediaStreamUrl!, playFileName: String(track.title.dropLast(4)), lyrics: lyrics))
+                                        nowPlayingMedia.send(.init(sourceWork: work, sourceTracks: tracks, playURL: track.mediaStreamUrl!, playFileName: String(track.title.dropLast(4)), lyrics: lyrics))
                                     }
                                 }, label: {
                                     Label(track.title, systemImage: "music.quarternote.3")
@@ -125,44 +155,104 @@ struct WorkDetailView: View {
                     } else {
                         ProgressView()
                     }
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text(work.release)
+                            Text({
+                                let hours = work.duration / 3600
+                                let minutes = (work.duration % 3600) / 60
+                                let seconds = work.duration % 60
+                                var components: [LocalizedStringResource] = []
+                                if hours > 0 {
+                                    components.append("\(hours)小时")
+                                }
+                                if minutes > 0 {
+                                    components.append("\(minutes)分")
+                                }
+                                if seconds > 0 || components.isEmpty {
+                                    components.append("\(seconds)秒")
+                                }
+                                return components.map{ String(localized: $0) }.joined()
+                            }())
+                        }
+                        .font(.system(size: 14))
+                        .foregroundStyle(.gray)
+                        Spacer()
+                    }
+                    .padding(.vertical)
+                    if !relatedWorks.isEmpty {
+                        VStack(alignment: .leading) {
+                            Text("你可能还喜欢")
+                                .font(.system(size: 22, weight: .bold))
+                                .padding(.horizontal)
+                            ScrollView(.horizontal) {
+                                HStack(spacing: 0) {
+                                    ForEach(relatedWorks) { work in
+                                        NavigationLink {
+                                            WorkDetailView(id: work.id)
+                                                .navigationTransition(.zoom(sourceID: work.id, in: ralatedWorkNavigationNamespace))
+                                        } label: {
+                                            VStack(alignment: .leading) {
+                                                CachedAsyncImage(url: URL(string: work.mainCoverUrl)) { image in
+                                                    image.resizable()
+                                                } placeholder: {
+                                                    Rectangle()
+                                                        .fill(Color.gray)
+                                                        .redacted(reason: .placeholder)
+                                                }
+                                                .scaledToFill()
+                                                .frame(width: 150, height: 150)
+                                                .clipped()
+                                                .cornerRadius(7)
+                                                .matchedTransitionSource(id: work.id, in: ralatedWorkNavigationNamespace)
+                                                Text(work.title)
+                                                    .font(.system(size: 12, weight: .medium))
+                                                    .lineLimit(1)
+                                                    .foregroundStyle(Color.primary)
+                                                Text(work.vas.map { $0.name }.joined(separator: "/"))
+                                                    .font(.system(size: 12))
+                                                    .lineLimit(1)
+                                                    .foregroundStyle(.gray)
+                                            }
+                                            .frame(width: 160)
+                                        }
+                                        .contextMenu {
+                                            work.contextActions
+                                        } preview: {
+                                            work.previewView
+                                        }
+                                    }
+                                }
+                                .scrollTargetLayout()
+                            }
+                            .scrollIndicators(.never)
+                            .scrollTargetBehavior(.viewAligned)
+                        }
+                        .padding(.vertical)
+                        .background(Color(UIColor.secondarySystemBackground))
+                        .padding(.horizontal, -16)
+                    }
                 }
                 .padding()
-                .padding(.bottom, 50)
+                .padding(.bottom, 60)
             } else {
                 ProgressView()
                     .controlSize(.large)
             }
         }
+        .introspect(.scrollView, on: .iOS(.v18...)) { scrollView in
+            scrollObservation = scrollView.observe(\.contentOffset, options: .new) { _, value in
+                let scrollOffset = value.newValue ?? .init()
+                isShowingNavigationTitle = scrollOffset.y - workTitleHeight > 170
+            }
+        }
+        .navigationTitle(isShowingNavigationTitle ? (work?.title ?? "") : "")
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             if let work {
                 ToolbarItemGroup(placement: .topBarTrailing) {
                     Menu {
-                        Section {
-                            if !accountToken.isEmpty {
-                                if work.userRating != nil {
-                                    Button("从收藏中移除", systemImage: "trash", role: .destructive) {
-                                        isRemoveFromFavoriteConfirmationPresented = true
-                                    }
-                                } else {
-                                    Button("收藏", systemImage: "star") {
-                                        requestJSON("https://api.asmr.one/api/review", method: .put, parameters: ["work_id": work.id, "rating": 5, "review_text": nil, "progress": nil], encoding: JSONEncoding.default, headers: globalRequestHeaders) { _, isSuccess in
-                                            if isSuccess {
-                                                NKTipper.automaticStyle.present(text: "已添加到收藏", symbol: "checkmark.circle.fill")
-                                                loadWorkInfo()
-                                            } else {
-                                                NKTipper.automaticStyle.present(text: "收藏时出错", symbol: "xmark.circle.fill")
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        Section {
-                            Link(destination: URL(string: "https://www.asmr.one/work/\(work.source_id)")!) {
-                                Label("在浏览器中打开", systemImage: "safari")
-                            }
-                            ShareLink("分享作品...", item: URL(string: "https://www.asmr.one/work/\(work.source_id)")!)
-                        }
+                        work.contextActions
                     } label: {
                         Image(systemName: "ellipsis")
                             .padding(5)
@@ -172,19 +262,6 @@ struct WorkDetailView: View {
                     .buttonBorderShape(.circle)
                 }
             }
-        }
-        .confirmationDialog("", isPresented: $isRemoveFromFavoriteConfirmationPresented) {
-            Button("移除", role: .destructive) {
-                requestJSON("https://api.asmr.one/api/review?work_id=\(work!.id)", method: .delete, headers: globalRequestHeaders) { _, isSuccess in
-                    if isSuccess {
-                        loadWorkInfo()
-                    } else {
-                        NKTipper.automaticStyle.present(text: "移除时出错", symbol: "xmark.circle.fill")
-                    }
-                }
-            }
-        } message: {
-            Text("确定将此作品从收藏中移除吗？")
         }
         .sheet(item: $textFileURLPresentation) { url in
             NavigationStack {
@@ -254,6 +331,13 @@ struct WorkDetailView: View {
         requestString("https://api.asmr.one/api/work/\(id)", headers: globalRequestHeaders) { respStr, isSuccess in
             if isSuccess {
                 work = getJsonData(Work.self, from: respStr) ?? nil
+                if let work {
+                    requestJSON("https://api.asmr.one/api/recommender/item-neighbors", method: .post, parameters: ["keyword": "", "itemId": String(work.id), "localSubtitledWorks": [], "withPlaylistStatus": []], encoding: JSONEncoding.default, headers: globalRequestHeaders) { respJson, isSuccess in
+                        if isSuccess {
+                            relatedWorks = getJsonData([Work].self, from: respJson["works"].rawString()!) ?? []
+                        }
+                    }
+                }
             }
         }
     }
