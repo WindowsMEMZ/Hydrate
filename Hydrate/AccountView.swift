@@ -95,6 +95,7 @@ struct AccountView: View {
                 }
             }
             .navigationTitle("登录")
+            .interactiveDismissDisabled(!usernameInput.isEmpty || !passwordInput.isEmpty)
         }
     }
     struct RegisterView: View {
@@ -142,6 +143,7 @@ struct AccountView: View {
                 }
             }
             .navigationTitle("注册")
+            .interactiveDismissDisabled(!usernameInput.isEmpty || !passwordInput.isEmpty || !confirmPasswordInput.isEmpty)
         }
     }
 }

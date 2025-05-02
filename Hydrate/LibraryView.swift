@@ -34,7 +34,7 @@ struct LibraryView: View {
                             })
                             .buttonStyle(.borderless)
                             ScrollView(.horizontal) {
-                                HStack(spacing: 0) {
+                                LazyHStack(spacing: 0) {
                                     ForEach(favoriteWorks) { work in
                                         NavigationLink {
                                             WorkDetailView(id: work.id)
@@ -126,6 +126,7 @@ struct LibraryView: View {
                         }
                     }
                     .padding()
+                    .padding(.bottom, 60)
                 }
                 .refreshable {
                     refresh()
@@ -198,6 +199,9 @@ struct LibraryView: View {
                     ProgressView()
                         .centerAligned()
                 }
+                Spacer()
+                    .frame(height: 50)
+                    .listRowSeparator(.hidden, edges: .bottom)
             }
             .listStyle(.plain)
             .navigationTitle("我的收藏")

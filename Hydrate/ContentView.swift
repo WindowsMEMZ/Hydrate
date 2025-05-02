@@ -266,7 +266,7 @@ struct ContentView: View {
     var nowPlayingView: some View {
         HStack {
             if let nowPlayingWork {
-                WebImage(url: URL(string: nowPlayingWork.mainCoverUrl)) { image in
+                WebImage(url: URL(string: nowPlayingWork.samCoverUrl)) { image in
                     image.resizable()
                 } placeholder: {
                     Rectangle()

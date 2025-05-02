@@ -285,7 +285,7 @@ struct WorkDetailView: View {
                                         .font(.system(size: 22, weight: .bold))
                                         .padding(.horizontal)
                                     ScrollView(.horizontal) {
-                                        HStack(spacing: 0) {
+                                        LazyHStack(spacing: 0) {
                                             ForEach(metadata.1) { work in
                                                 NavigationLink {
                                                     WorkDetailView(id: work.id)
@@ -335,7 +335,7 @@ struct WorkDetailView: View {
                                 .font(.system(size: 22, weight: .bold))
                                 .padding(.horizontal)
                             ScrollView(.horizontal) {
-                                HStack(spacing: 0) {
+                                LazyHStack(spacing: 0) {
                                     ForEach(relatedWorks) { work in
                                         NavigationLink {
                                             WorkDetailView(id: work.id)

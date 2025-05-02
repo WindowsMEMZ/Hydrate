@@ -58,6 +58,7 @@ struct RecentsView: View {
                         .padding(.horizontal, -10)
                     }
                     .padding()
+                    .padding(.bottom, 60)
                 }
             } else {
                 ContentUnavailableView("无最近浏览项目", systemImage: "clock.fill")

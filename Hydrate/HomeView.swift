@@ -29,7 +29,7 @@ struct HomeView: View {
                     Text("专属精选推荐")
                         .font(.system(size: 22, weight: .bold))
                     ScrollView(.horizontal) {
-                        HStack(spacing: 0) {
+                        LazyHStack(spacing: 0) {
                             ForEach(userSuggestionWorks) { work in
                                 NavigationLink {
                                     WorkDetailView(id: work.id)
@@ -80,7 +80,7 @@ struct HomeView: View {
                     .font(.system(size: 22, weight: .bold))
                 if !popularWorks.isEmpty {
                     ScrollView(.horizontal) {
-                        HStack(spacing: 0) {
+                        LazyHStack(spacing: 0) {
                             ForEach(popularWorks) { work in
                                 NavigationLink {
                                     WorkDetailView(id: work.id)
