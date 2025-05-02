@@ -1,0 +1,36 @@
+<svg fill="none" viewBox="0 0 400 400" width="400" height="400" xmlns="http://www.w3.org/2000/svg">
+    <foreignObject width="100%" height="100%">
+        <div xmlns="http://www.w3.org/1999/xhtml">
+            <style>
+                .horizontal-scroll-container {
+                    display: flex;
+                    overflow-x: auto;
+                    scroll-snap-type: x mandatory;
+                    scroll-behavior: smooth;
+                    -webkit-overflow-scrolling: touch;
+                    gap: 10px;
+                    scrollbar-width: none;
+                }
+                .horizontal-scroll-item {
+                    background-color: #303132;
+                    box-shadow: 2px 2px 6px #232323;
+                    border-radius: 20px;
+                    padding: 30px;
+                    margin: 10px 20px;
+                    scroll-snap-align: center;
+                    flex: 0 0 50%;
+                    height: 80vh;
+                    background-size: cover;
+                    background-position: center;
+                    background-repeat: no-repeat;
+                }
+            </style>
+            <div class="horizontal-scroll-container">
+                <div class="horizontal-scroll-item" style="background-image: url(Home.png); @media (prefers-color-scheme: dark) { background-image: url(Home_Dark.png); }"></div>
+    <div class="horizontal-scroll-item" style="background-image: url(WorkDetail.png); @media (prefers-color-scheme: dark) { background-image: url(WorkDetail_Dark.png); }"></div>
+                <div class="horizontal-scroll-item" style="background-image: url(Library.png); @media (prefers-color-scheme: dark) { background-image: url(Library_Dark.png); }"></div>
+    <div class="horizontal-scroll-item" style="background-image: url(Search.png); @media (prefers-color-scheme: dark) { background-image: url(Search_Dark.png); }"></div>
+            </div>
+        </div>
+    </foreignObject>
+</svg>
