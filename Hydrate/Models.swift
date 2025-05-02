@@ -171,7 +171,6 @@ struct Work: Identifiable, Equatable, Codable {
         var parent_workno: String?
         var original_workno: String?
         var is_translation_agree: Bool
-        var translation_bonus_langs: [String]
         var is_translation_bonus_child: Bool
     }
 }

@@ -73,6 +73,16 @@
         }
       }
     },
+    "App 图标设计" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Icon Design"
+          }
+        }
+      }
+    },
     "App 开发" : {
       "localizations" : {
         "en" : {

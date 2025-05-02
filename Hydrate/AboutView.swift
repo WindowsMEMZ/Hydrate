@@ -37,6 +37,15 @@ struct AboutView: View {
                     .padding(.horizontal, -15)
             }
             Section {
+                Text(verbatim: "宵待天空雀色时")
+            } header: {
+                Text("App 图标设计")
+                    .textCase(nil)
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(Color.primary)
+                    .padding(.horizontal, -15)
+            }
+            Section {
                 SinglePackageBlock(name: "Alamofire", license: "MIT license")
                 SinglePackageBlock(name: "BottomSheet", license: "MIT license")
                 SinglePackageBlock(name: "SDWebImage", license: "MIT license")
