@@ -7,8 +7,8 @@
 
 import SwiftUI
 import DarockUI
-import CachedAsyncImage
 import DarockFoundation
+import SDWebImageSwiftUI
 
 struct SearchView: View {
     var isSearchKeyboardFocused: FocusState<Bool>.Binding
@@ -25,7 +25,7 @@ struct SearchView: View {
             ForEach(searchResults) { work in
                 NavigationLink { WorkDetailView(id: work.id) } label: {
                     HStack {
-                        CachedAsyncImage(url: URL(string: work.mainCoverUrl)) { image in
+                        WebImage(url: URL(string: work.mainCoverUrl)) { image in
                             image.resizable()
                         } placeholder: {
                             Rectangle()

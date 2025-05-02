@@ -28,7 +28,7 @@ struct AboutView: View {
                     .padding(.horizontal, -15)
             }
             Section {
-                Text("WindowsMEMZ")
+                Text(verbatim: "WindowsMEMZ")
             } header: {
                 Text("App 开发")
                     .textCase(nil)
@@ -39,7 +39,8 @@ struct AboutView: View {
             Section {
                 SinglePackageBlock(name: "Alamofire", license: "MIT license")
                 SinglePackageBlock(name: "BottomSheet", license: "MIT license")
-                SinglePackageBlock(name: "swiftui-cached-async-image", license: "MIT license")
+                SinglePackageBlock(name: "SDWebImage", license: "MIT license")
+                SinglePackageBlock(name: "SDWebImageSwiftUI", license: "MIT license")
                 SinglePackageBlock(name: "swiftui-introspect", license: "MIT license")
                 SinglePackageBlock(name: "SwiftyJSON", license: "MIT license")
             } header: {
@@ -52,7 +53,7 @@ struct AboutView: View {
             Section {
                 Text("Hydrate 用于学习 Swift 以及 SwiftUI 开发以及供个人、非商业性地使用，内容版权属于 [asmr.one](https://asmr.one) 或音声原发布平台以及音声作者本人。")
             } header: {
-                Text("Disclaimer")
+                Text(verbatim: "Disclaimer")
                     .textCase(nil)
                     .font(.system(size: 20, weight: .semibold))
                     .foregroundStyle(Color.primary)

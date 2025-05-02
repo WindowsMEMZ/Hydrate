@@ -9,12 +9,13 @@ import SwiftUI
 import DarockUI
 import NotifKit
 import Alamofire
-import CachedAsyncImage
 import DarockFoundation
+import SDWebImageSwiftUI
 @_spi(Advanced) import SwiftUIIntrospect
 
 struct WorkDetailView: View {
     var id: Int
+    @Namespace var authorMoreWorkNavigationNamespace
     @Namespace var ralatedWorkNavigationNamespace
     @AppStorage("AccountToken") var accountToken = ""
     @State var work: Work?
@@ -27,6 +28,7 @@ struct WorkDetailView: View {
     @State var workTitleHeight: CGFloat = 0
     @State var scrollObservation: NSKeyValueObservation?
     @State var isShowingNavigationTitle = false
+    @State var moreWorksByAuthor = [(String, [Work])]()
     @State var relatedWorks = [Work]()
     @State var isDownloaded = false
     @State var downloadProgress: Double?
@@ -35,7 +37,7 @@ struct WorkDetailView: View {
         ScrollView {
             if let work {
                 VStack {
-                    CachedAsyncImage(url: URL(string: work.mainCoverUrl)) { image in
+                    WebImage(url: URL(string: work.mainCoverUrl)) { image in
                         image.resizable()
                     } placeholder: {
                         Rectangle()
@@ -160,24 +162,20 @@ struct WorkDetailView: View {
                     }
                     HStack {
                         VStack(alignment: .leading) {
-                            Text(work.release)
-                            Text({
-                                let hours = work.duration / 3600
-                                let minutes = (work.duration % 3600) / 60
-                                let seconds = work.duration % 60
-                                var components: [LocalizedStringResource] = []
-                                if hours > 0 {
-                                    components.append("\(hours)小时")
-                                }
-                                if minutes > 0 {
-                                    components.append("\(minutes)分")
-                                }
-                                if seconds > 0 || components.isEmpty {
-                                    components.append("\(seconds)秒")
-                                }
-                                return components.map{ String(localized: $0) }.joined()
-                            }())
+                            Text(work.release.replacingOccurrences(of: "-", with: "/"))
                             if let tracks {
+                                Text({
+                                    let hours = work.duration / 3600
+                                    let minutes = (work.duration % 3600) / 60
+                                    var components: [LocalizedStringResource] = []
+                                    if hours > 0 {
+                                        components.append("\(hours)小时")
+                                    }
+                                    if minutes > 0 || components.isEmpty {
+                                        components.append("\(minutes)分钟")
+                                    }
+                                    return String(localized: "\(tracks.flattened.filter { $0.type != .folder }.count)个项目，\(components.map{ String(localized: $0) }.joined())")
+                                }())
                                 Text({
                                     let sizes = tracks.flattened.compactMap(\.size)
                                     var byte: UInt64 = 0
@@ -196,7 +194,59 @@ struct WorkDetailView: View {
                     .padding(.vertical)
                     if !relatedWorks.isEmpty {
                         VStack(alignment: .leading) {
-                            Text("你可能还喜欢")
+                            if !moreWorksByAuthor.isEmpty {
+                                ForEach(moreWorksByAuthor, id: \.0) { metadata in
+                                    Text("更多\(metadata.0)的作品")
+                                        .font(.system(size: 22, weight: .bold))
+                                        .padding(.horizontal)
+                                    ScrollView(.horizontal) {
+                                        HStack(spacing: 0) {
+                                            ForEach(metadata.1) { work in
+                                                NavigationLink {
+                                                    WorkDetailView(id: work.id)
+                                                        .navigationTransition(.zoom(sourceID: work.id, in: ralatedWorkNavigationNamespace))
+                                                } label: {
+                                                    VStack(alignment: .leading) {
+                                                        WebImage(url: URL(string: work.mainCoverUrl)) { image in
+                                                            image.resizable()
+                                                        } placeholder: {
+                                                            Rectangle()
+                                                                .fill(Color.gray)
+                                                                .redacted(reason: .placeholder)
+                                                        }
+                                                        .scaledToFill()
+                                                        .frame(width: 150, height: 150)
+                                                        .clipped()
+                                                        .cornerRadius(7)
+                                                        .matchedTransitionSource(id: work.id, in: ralatedWorkNavigationNamespace)
+                                                        Text(work.title)
+                                                            .font(.system(size: 12, weight: .medium))
+                                                            .lineLimit(1)
+                                                            .foregroundStyle(Color.primary)
+                                                        Text(work.vas.map { $0.name }.joined(separator: "/"))
+                                                            .font(.system(size: 12))
+                                                            .lineLimit(1)
+                                                            .foregroundStyle(.gray)
+                                                    }
+                                                    .frame(width: 160)
+                                                }
+                                                .contextMenu {
+                                                    work.contextActions
+                                                } preview: {
+                                                    work.previewView
+                                                }
+                                            }
+                                        }
+                                        .scrollTargetLayout()
+                                        .scrollTransition { content, _ in
+                                            content.offset(x: 14)
+                                        }
+                                    }
+                                    .scrollIndicators(.never)
+                                    .scrollTargetBehavior(.viewAligned)
+                                }
+                            }
+                            Text("你可能也喜欢")
                                 .font(.system(size: 22, weight: .bold))
                                 .padding(.horizontal)
                             ScrollView(.horizontal) {
@@ -207,7 +257,7 @@ struct WorkDetailView: View {
                                                 .navigationTransition(.zoom(sourceID: work.id, in: ralatedWorkNavigationNamespace))
                                         } label: {
                                             VStack(alignment: .leading) {
-                                                CachedAsyncImage(url: URL(string: work.mainCoverUrl)) { image in
+                                                WebImage(url: URL(string: work.mainCoverUrl)) { image in
                                                     image.resizable()
                                                 } placeholder: {
                                                     Rectangle()
@@ -425,6 +475,17 @@ struct WorkDetailView: View {
                 if let progress = downloadProgress, progress < 1 {
                     trackDownloadProgressUpdate()
                 }
+                Task {
+                    moreWorksByAuthor.removeAll()
+                    for va in work.vas {
+                        let result = await requestJSON("https://api.asmr.one/api/search/$va:\(va.name.urlEncoded())$?order=create_date&sort=desc&page=1&subtitle=0&includeTranslationWorks=true")
+                        if case let .success(respJson) = result,
+                           let works = getJsonData([Work].self, from: respJson["works"].rawString()!),
+                           !works.isEmpty {
+                            moreWorksByAuthor.append((va.name, works))
+                        }
+                    }
+                }
                 requestJSON("https://api.asmr.one/api/recommender/item-neighbors", method: .post, parameters: ["keyword": "", "itemId": String(work.id), "localSubtitledWorks": [], "withPlaylistStatus": []], encoding: JSONEncoding.default, headers: globalRequestHeaders) { respJson, isSuccess in
                     if isSuccess {
                         relatedWorks = getJsonData([Work].self, from: respJson["works"].rawString()!) ?? []
@@ -437,6 +498,9 @@ struct WorkDetailView: View {
                 }
                 if !recentWorks.contains(work) {
                     recentWorks.insert(work, at: 0)
+                    if recentWorks.count > 10 {
+                        recentWorks.removeLast()
+                    }
                 } else {
                     recentWorks.move(fromOffsets: [recentWorks.firstIndex(of: work)!], toOffset: 0)
                 }

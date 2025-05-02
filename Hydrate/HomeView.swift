@@ -8,9 +8,8 @@
 import SwiftUI
 import DarockUI
 import Alamofire
-import CachedAsyncImage
 import DarockFoundation
-import SwiftUIIntrospect
+import SDWebImageSwiftUI
 
 struct HomeView: View {
     @Namespace var userSuggestionNavigationNamespace
@@ -37,7 +36,7 @@ struct HomeView: View {
                                         .navigationTransition(.zoom(sourceID: work.id, in: userSuggestionNavigationNamespace))
                                 } label: {
                                     VStack(alignment: .leading) {
-                                        CachedAsyncImage(url: URL(string: work.mainCoverUrl)) { image in
+                                        WebImage(url: URL(string: work.mainCoverUrl)) { image in
                                             image.resizable()
                                         } placeholder: {
                                             Rectangle()
@@ -88,7 +87,7 @@ struct HomeView: View {
                                         .navigationTransition(.zoom(sourceID: work.id, in: popularNavigationNamespace))
                                 } label: {
                                     VStack(alignment: .leading) {
-                                        CachedAsyncImage(url: URL(string: work.mainCoverUrl)) { image in
+                                        WebImage(url: URL(string: work.mainCoverUrl)) { image in
                                             image.resizable()
                                         } placeholder: {
                                             Rectangle()
@@ -141,7 +140,7 @@ struct HomeView: View {
                                     .navigationTransition(.zoom(sourceID: work.id, in: allWorkNavigationNamespace))
                             } label: {
                                 VStack(alignment: .leading) {
-                                    CachedAsyncImage(url: URL(string: work.mainCoverUrl)) { image in
+                                    WebImage(url: URL(string: work.mainCoverUrl)) { image in
                                         image.resizable()
                                     } placeholder: {
                                         Rectangle()

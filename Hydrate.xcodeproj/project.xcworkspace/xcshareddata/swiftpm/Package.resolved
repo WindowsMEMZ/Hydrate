@@ -1,5 +1,5 @@
 {
-  "originHash" : "c14ad0da9839205d27d073d1ee78813c8cc2a3e77efdf90ddccd7b8a14aac625",
+  "originHash" : "7ecbb047676923836254e2130d7940de94c23acedabae114d19cfd6dcc913ba7",
   "pins" : [
     {
       "identity" : "alamofire",
@@ -47,12 +47,21 @@
       }
     },
     {
-      "identity" : "swiftui-cached-async-image",
+      "identity" : "sdwebimage",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/lorenzofiamingo/swiftui-cached-async-image",
+      "location" : "https://github.com/SDWebImage/SDWebImage.git",
       "state" : {
-        "revision" : "467a3d17479887943ab917a379e62bbaff60ac8a",
-        "version" : "2.1.1"
+        "revision" : "cac9a55a3ae92478a2c95042dcc8d9695d2129ca",
+        "version" : "5.21.0"
+      }
+    },
+    {
+      "identity" : "sdwebimageswiftui",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/SDWebImage/SDWebImageSwiftUI",
+      "state" : {
+        "revision" : "451c6dfd5ecec2cf626d1d9ca81c2d4a60355172",
+        "version" : "3.1.3"
       }
     },
     {

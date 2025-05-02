@@ -8,8 +8,8 @@
 import SwiftUI
 import NotifKit
 import Alamofire
-import CachedAsyncImage
 import DarockFoundation
+import SDWebImageSwiftUI
 
 struct Pagination: Decodable {
     var currentPage: Int
@@ -50,7 +50,7 @@ struct Work: Identifiable, Equatable, Codable {
     
     var previewView: some View {
         VStack(alignment: .leading) {
-            CachedAsyncImage(url: URL(string: self.mainCoverUrl)) { image in
+            WebImage(url: URL(string: self.mainCoverUrl)) { image in
                 image.resizable()
             } placeholder: {
                 Rectangle()

@@ -7,7 +7,7 @@
 
 import SwiftUI
 import DarockUI
-import CachedAsyncImage
+import SDWebImageSwiftUI
 
 struct RecentsView: View {
     @Namespace var recentNavigationNamespace
@@ -24,7 +24,7 @@ struct RecentsView: View {
                                         .navigationTransition(.zoom(sourceID: work.id, in: recentNavigationNamespace))
                                 } label: {
                                     VStack(alignment: .leading) {
-                                        CachedAsyncImage(url: URL(string: work.mainCoverUrl)) { image in
+                                        WebImage(url: URL(string: work.mainCoverUrl)) { image in
                                             image.resizable()
                                         } placeholder: {
                                             Rectangle()

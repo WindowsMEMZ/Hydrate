@@ -11,8 +11,8 @@ import Alamofire
 import BottomSheet
 import MediaPlayer
 import AVFoundation
-import CachedAsyncImage
 import DarockFoundation
+import SDWebImageSwiftUI
 @_spi(Advanced) import SwiftUIIntrospect
 
 struct ContentView: View {
@@ -149,7 +149,7 @@ struct ContentView: View {
                     .allowsHitTesting(false)
                 HStack(spacing: 5) {
                     if let nowPlayingWork {
-                        CachedAsyncImage(url: URL(string: nowPlayingWork.mainCoverUrl)) { image in
+                        WebImage(url: URL(string: nowPlayingWork.mainCoverUrl)) { image in
                             image.resizable()
                         } placeholder: {
                             Rectangle()
@@ -266,7 +266,7 @@ struct ContentView: View {
     var nowPlayingView: some View {
         HStack {
             if let nowPlayingWork {
-                CachedAsyncImage(url: URL(string: nowPlayingWork.mainCoverUrl)) { image in
+                WebImage(url: URL(string: nowPlayingWork.mainCoverUrl)) { image in
                     image.resizable()
                 } placeholder: {
                     Rectangle()

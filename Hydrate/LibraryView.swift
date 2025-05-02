@@ -7,8 +7,8 @@
 
 import SwiftUI
 import DarockUI
-import CachedAsyncImage
 import DarockFoundation
+import SDWebImageSwiftUI
 
 struct LibraryView: View {
     @Namespace var favoriteNavigationNamespace
@@ -41,7 +41,7 @@ struct LibraryView: View {
                                                 .navigationTransition(.zoom(sourceID: work.id, in: favoriteNavigationNamespace))
                                         } label: {
                                             VStack(alignment: .leading) {
-                                                CachedAsyncImage(url: URL(string: work.mainCoverUrl)) { image in
+                                                WebImage(url: URL(string: work.mainCoverUrl)) { image in
                                                     image.resizable()
                                                 } placeholder: {
                                                     Rectangle()
@@ -91,7 +91,7 @@ struct LibraryView: View {
                                             .navigationTransition(.zoom(sourceID: work.id, in: downloadedNavigationNamespace))
                                     } label: {
                                         VStack(alignment: .leading) {
-                                            CachedAsyncImage(url: URL(string: work.mainCoverUrl)) { image in
+                                            WebImage(url: URL(string: work.mainCoverUrl)) { image in
                                                 image.resizable()
                                             } placeholder: {
                                                 Rectangle()
@@ -160,7 +160,7 @@ struct LibraryView: View {
                 ForEach(favoriteWorks) { work in
                     NavigationLink { WorkDetailView(id: work.id) } label: {
                         HStack {
-                            CachedAsyncImage(url: URL(string: work.mainCoverUrl)) { image in
+                            WebImage(url: URL(string: work.mainCoverUrl)) { image in
                                 image.resizable()
                             } placeholder: {
                                 Rectangle()

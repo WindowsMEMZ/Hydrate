@@ -11,7 +11,6 @@ import SwiftUI
 import DarockUI
 import MediaPlayer
 import AVFoundation
-import CachedAsyncImage
 import DarockFoundation
 
 let globalAudioPlayer = AVPlayer()
