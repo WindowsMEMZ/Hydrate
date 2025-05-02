@@ -32,6 +32,7 @@ struct WorkDetailView: View {
     @State var relatedWorks = [Work]()
     @State var isDownloaded = false
     @State var downloadProgress: Double?
+    @State var individualDownloadProgresses: [TrackStructure: Double]?
     @State var downloadProgressUpdateTimer: Timer?
     var body: some View {
         ScrollView {
@@ -126,24 +127,108 @@ struct WorkDetailView: View {
                                         nowPlayingMedia.send(.init(sourceWork: work, sourceTracks: tracks, playURL: track.mediaStreamUrl!, playFileName: String(track.title.dropLast(4)), lyrics: lyrics))
                                     }
                                 }, label: {
-                                    Label(track.title, systemImage: "music.quarternote.3")
+                                    HStack {
+                                        Label(track.title, systemImage: "music.quarternote.3")
+                                        if !isDownloaded,
+                                           let _progress = downloadProgress,
+                                           _progress < 1,
+                                           let individualDownloadProgresses,
+                                           let progress = individualDownloadProgresses[track] {
+                                            Spacer()
+                                            if progress < 1 {
+                                                Gauge(value: progress, label: {})
+                                                    .gaugeStyle(.accessoryCircularCapacity)
+                                                    .tint(.accentColor)
+                                                    .scaleEffect(0.3)
+                                                    .frame(width: 20, height: 20)
+                                                    .animation(.smooth, value: progress)
+                                            } else {
+                                                Image(systemName: "checkmark.circle.fill")
+                                                    .font(.system(size: 16))
+                                                    .foregroundStyle(.gray)
+                                            }
+                                        }
+                                    }
                                 })
                             case .text:
                                 Button(action: {
                                     textFileURLPresentation = track.mediaStreamUrl!
                                 }, label: {
-                                    Label(track.title, systemImage: "text.document")
+                                    HStack {
+                                        Label(track.title, systemImage: "text.document")
+                                        if !isDownloaded,
+                                           let _progress = downloadProgress,
+                                           _progress < 1,
+                                           let individualDownloadProgresses,
+                                           let progress = individualDownloadProgresses[track] {
+                                            Spacer()
+                                            if progress < 1 {
+                                                Gauge(value: progress, label: {})
+                                                    .gaugeStyle(.accessoryCircularCapacity)
+                                                    .tint(.accentColor)
+                                                    .scaleEffect(0.3)
+                                                    .frame(width: 20, height: 20)
+                                                    .animation(.smooth, value: progress)
+                                            } else {
+                                                Image(systemName: "checkmark.circle.fill")
+                                                    .font(.system(size: 16))
+                                                    .foregroundStyle(.gray)
+                                            }
+                                        }
+                                    }
                                 })
                             case .image:
                                 Button(action: {
                                     imageFileURLPresentation = track.mediaStreamUrl!
                                 }, label: {
-                                    Label(track.title, systemImage: "photo")
+                                    HStack {
+                                        Label(track.title, systemImage: "photo")
+                                        if !isDownloaded,
+                                           let _progress = downloadProgress,
+                                           _progress < 1,
+                                           let individualDownloadProgresses,
+                                           let progress = individualDownloadProgresses[track] {
+                                            Spacer()
+                                            if progress < 1 {
+                                                Gauge(value: progress, label: {})
+                                                    .gaugeStyle(.accessoryCircularCapacity)
+                                                    .tint(.accentColor)
+                                                    .scaleEffect(0.3)
+                                                    .frame(width: 20, height: 20)
+                                                    .animation(.smooth, value: progress)
+                                            } else {
+                                                Image(systemName: "checkmark.circle.fill")
+                                                    .font(.system(size: 16))
+                                                    .foregroundStyle(.gray)
+                                            }
+                                        }
+                                    }
                                 })
                             case .other:
                                 if let url = track.mediaStreamUrl {
                                     Link(destination: URL(string: url)!) {
-                                        Label(track.title, systemImage: "document")
+                                        HStack {
+                                            Label(track.title, systemImage: "document")
+                                            if !isDownloaded,
+                                               let _progress = downloadProgress,
+                                               _progress < 1,
+                                               let individualDownloadProgresses,
+                                               let progress = individualDownloadProgresses[track] {
+                                                Spacer()
+                                                if progress < 1 {
+                                                    Gauge(value: progress, label: {})
+                                                        .gaugeStyle(.accessoryCircularCapacity)
+                                                        .tint(.accentColor)
+                                                        .scaleEffect(0.3)
+                                                        .frame(width: 20, height: 20)
+                                                        .animation(.smooth, value: progress)
+                                                } else {
+                                                    Image(systemName: "checkmark.circle.fill")
+                                                        .font(.system(size: 16))
+                                                        .foregroundStyle(.gray)
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -456,6 +541,9 @@ struct WorkDetailView: View {
                 }
             }
             downloadProgress = newProgress
+            if let tracks {
+                individualDownloadProgresses = DownloadManager.shared.individualProgress(for: id, withTracks: tracks)
+            }
         }
     }
     

@@ -75,8 +75,21 @@ class DownloadManager {
         }
         return nil
     }
+    func individualProgress(for id: Int, withTracks tracks: [TrackStructure]) -> [TrackStructure: Double]? {
+        guard let requests = taskTable[id] else {
+            return nil
+        }
+        var result = [TrackStructure: Double]()
+        let flattenedTracks = tracks.flattened
+        for request in requests {
+            if let track = flattenedTracks.first(where: { $0.mediaStreamUrl != nil && $0.mediaDownloadUrl == request.request?.url?.absoluteString }) {
+                result.updateValue(request.isFinished ? 1 : request.downloadProgress.fractionCompleted, forKey: track)
+            }
+        }
+        return result
+    }
     func downloadedWorks() -> [Work] {
-        allBundles().sorted { $0.dateCreated > $1.dateCreated }.map { $0.work }
+        allBundles().filter { (progress(for: $0.work.id) ?? 1) == 1 }.sorted { $0.dateCreated > $1.dateCreated }.map { $0.work }
     }
     func isDownloaded(for id: Int) -> Bool {
         if let progress = progress(for: id), progress < 1 {

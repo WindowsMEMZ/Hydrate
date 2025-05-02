@@ -101,7 +101,14 @@ struct Work: Identifiable, Equatable, Codable {
                         }
                     }
                 }
-                if !DownloadManager.shared.isDownloaded(for: id) {
+                if let progress = DownloadManager.shared.progress(for: id), progress < 1 {
+                    Button(action: {
+                        DownloadManager.shared.cancelTask(for: id)
+                    }, label: {
+                        Image(_internalSystemName: "stop.circle.open")
+                        Text("停止下载")
+                    })
+                } else if !DownloadManager.shared.isDownloaded(for: id) {
                     Button("下载", systemImage: "arrow.down.circle") {
                         requestString("https://api.asmr.one/api/tracks/\(id)?v=1", headers: globalRequestHeaders) { respStr, isSuccess in
                             if isSuccess, let tracks = getJsonData([TrackStructure].self, from: respStr) {
@@ -109,13 +116,6 @@ struct Work: Identifiable, Equatable, Codable {
                             }
                         }
                     }
-                } else if let progress = DownloadManager.shared.progress(for: id), progress < 1 {
-                    Button(action: {
-                        DownloadManager.shared.cancelTask(for: id)
-                    }, label: {
-                        Image(_internalSystemName: "stop.circle.open")
-                        Text("停止下载")
-                    })
                 } else {
                     Button("移除下载", systemImage: "trash", role: .destructive) {
                         DownloadManager.shared.remove(id: id)
@@ -176,7 +176,7 @@ struct Work: Identifiable, Equatable, Codable {
     }
 }
 
-struct TrackStructure: Hashable, Codable {
+struct TrackStructure: Equatable, Hashable, Codable {
     var type: FileType
     var hash: String?
     var title: String
@@ -186,6 +186,10 @@ struct TrackStructure: Hashable, Codable {
     var duration: Double?
     var size: UInt64?
     var children: [TrackStructure]?
+    
+    static func ==(lhs: Self, rhs: Self) -> Bool {
+        lhs.type == rhs.type && lhs.hash == rhs.hash && lhs.title == rhs.title && lhs.workTitle == rhs.workTitle && lhs.duration == rhs.duration && lhs.size == rhs.size
+    }
     
     enum FileType: String, Codable {
         case folder
