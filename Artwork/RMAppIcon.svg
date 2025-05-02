@@ -1,7 +1,7 @@
 <svg fill="none" viewBox="0 0 400 400" width="400" height="400" xmlns="http://www.w3.org/2000/svg">
     <foreignObject width="100%" height="100%">
         <div xmlns="http://www.w3.org/1999/xhtml">
-            <img src="Artwork/AppIcon.png" alt="App 图标" width="200" height="200" style="border-radius: 30px;" />
+            <img src="https://github.com/WindowsMEMZ/Hydrate/raw/main/Artwork/AppIcon.png" alt="App 图标" width="200" height="200" style="border-radius: 30px;" />
         </div>
     </foreignObject>
 </svg>
