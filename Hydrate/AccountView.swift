@@ -26,8 +26,6 @@ struct AccountView: View {
                                 .foregroundStyle(.accent)
                             Text(cachedUserName)
                         }
-                    }
-                    Section {
                         Button("退出登录", role: .destructive) {
                             accountToken = ""
                             cachedUserName = ""
@@ -39,6 +37,11 @@ struct AccountView: View {
                     })
                     NavigationLink(destination: { RegisterView() }, label: {
                         Label("注册", systemImage: "person.badge.plus")
+                    })
+                }
+                Section {
+                    NavigationLink(destination: { AboutView() }, label: {
+                        Label("关于 App", systemImage: "info.circle.fill")
                     })
                 }
             }

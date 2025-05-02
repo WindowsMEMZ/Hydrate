@@ -12,6 +12,7 @@ import DarockFoundation
 
 struct SearchView: View {
     var isSearchKeyboardFocused: FocusState<Bool>.Binding
+    @Environment(\.colorScheme) var colorScheme
     @State var searchText = ""
     @State var searchTokens = [SearchToken]()
     @State var searchResults = [Work]()
@@ -41,6 +42,10 @@ struct SearchView: View {
                                 .lineLimit(1)
                                 .foregroundStyle(Color.primary)
                             Text(work.vas.map { $0.name }.joined(separator: "/"))
+                                .font(.system(size: 12))
+                                .lineLimit(1)
+                                .foregroundStyle(.gray)
+                            Text(work.tags.map(\.name).joined(separator: "·"))
                                 .font(.system(size: 12))
                                 .lineLimit(1)
                                 .foregroundStyle(.gray)
@@ -85,9 +90,9 @@ struct SearchView: View {
                                     Image(systemName: token.representingSymbol)
                                     Text(token.id)
                                 }
-                                .foregroundStyle(Color.primary)
+                                .foregroundStyle(Color.white)
                                 .padding(2)
-                                .background(RoundedRectangle(cornerRadius: 4).fill(Color.gray))
+                                .background(RoundedRectangle(cornerRadius: 4).fill(colorScheme == .dark ? Color.gray : Color(red: 142/255, green: 142/255, blue: 147/255)))
                             }
                             Text(search.text)
                         }
@@ -98,6 +103,9 @@ struct SearchView: View {
                     updateSearchHistory()
                 }
             }
+            Spacer()
+                .frame(height: 50)
+                .listRowSeparator(.hidden, edges: .bottom)
         }
         .listStyle(.plain)
         .searchable(text: $searchText, tokens: $searchTokens, prompt: "音声、声优、标签，以及更多") { token in

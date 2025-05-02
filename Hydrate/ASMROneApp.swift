@@ -60,6 +60,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
             }
             return .success
         }
+        UIApplication.shared.beginReceivingRemoteControlEvents()
         
         if let _latestNowPlaying = try? String(contentsOfFile: NSHomeDirectory() + "/Documents/LatestNowPlaying.json", encoding: .utf8),
            var latestNowPlaying = getJsonData(NowPlayingInfo.self, from: _latestNowPlaying) {

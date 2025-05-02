@@ -60,6 +60,25 @@ struct ContentView: View {
                         Text("主页")
                     }
                     NavigationStack {
+                        RecentsView()
+                            .toolbar {
+                                ToolbarItem(placement: .topBarTrailing) {
+                                    Button(action: {
+                                        isAccountManagementPresented = true
+                                    }, label: {
+                                        Image(systemName: "person.crop.circle")
+                                            .font(.system(size: 22, weight: .semibold))
+                                            .foregroundStyle(.accent)
+                                    })
+                                }
+                            }
+                    }
+                    .tag(4)
+                    .tabItem {
+                        Image(systemName: "clock.fill")
+                        Text("最近浏览")
+                    }
+                    NavigationStack {
                         LibraryView()
                             .toolbar {
                                 ToolbarItem(placement: .topBarTrailing) {
@@ -230,21 +249,17 @@ struct ContentView: View {
         }
         .onReceive(globalAudioPlayer.publisher(for: \.timeControlStatus)) { status in
             isNowPlaying = status == .playing
+            MPNowPlayingInfoCenter.default().playbackState = status == .playing ? .playing : .paused
         }
         .onReceive(globalAudioPlayer.publisher(for: \.currentItem)) { item in
             if let item {
                 var nowPlayingInfo = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [String: Any]()
                 nowPlayingInfo[MPMediaItemPropertyPlaybackDuration] = item.duration.seconds
+                nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = 0.0
                 nowPlayingInfo[MPNowPlayingInfoPropertyPlaybackRate] = 1.0
                 nowPlayingInfo[MPNowPlayingInfoPropertyDefaultPlaybackRate] = 1.0
                 MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
             }
-        }
-        .onReceive(globalAudioPlayer.periodicTimePublisher()) { time in
-            // Code in this closure runs at nearly each frame, optimizing for speed is important.
-            var nowPlayingInfo = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [String: Any]()
-            nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = time.seconds
-            MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
         }
     }
     

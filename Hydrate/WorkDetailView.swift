@@ -28,6 +28,9 @@ struct WorkDetailView: View {
     @State var scrollObservation: NSKeyValueObservation?
     @State var isShowingNavigationTitle = false
     @State var relatedWorks = [Work]()
+    @State var isDownloaded = false
+    @State var downloadProgress: Double?
+    @State var downloadProgressUpdateTimer: Timer?
     var body: some View {
         ScrollView {
             if let work {
@@ -146,7 +149,7 @@ struct WorkDetailView: View {
                         .listStyle(.plain)
                         .scrollDisabled(true)
                         .frame(height: trackListHeight)
-                        .animation(.easeOut(duration: 0.2), value: trackListHeight)
+                        .padding(.horizontal, -16)
                         .introspect(.list, on: .iOS(.v18...)) { tableView in
                             trackListHeightObservation = tableView.observe(\.contentSize) { _, _ in
                                 trackListHeight = tableView.contentSize.height
@@ -174,6 +177,17 @@ struct WorkDetailView: View {
                                 }
                                 return components.map{ String(localized: $0) }.joined()
                             }())
+                            if let tracks {
+                                Text({
+                                    let sizes = tracks.flattened.compactMap(\.size)
+                                    var byte: UInt64 = 0
+                                    for size in sizes {
+                                        byte += size
+                                    }
+                                    let formatter = ByteCountFormatter()
+                                    return formatter.string(fromByteCount: Int64(byte))
+                                }())
+                            }
                         }
                         .font(.system(size: 14))
                         .foregroundStyle(.gray)
@@ -224,6 +238,9 @@ struct WorkDetailView: View {
                                     }
                                 }
                                 .scrollTargetLayout()
+                                .scrollTransition { content, _ in
+                                    content.offset(x: 14)
+                                }
                             }
                             .scrollIndicators(.never)
                             .scrollTargetBehavior(.viewAligned)
@@ -251,6 +268,52 @@ struct WorkDetailView: View {
         .toolbar {
             if let work {
                 ToolbarItemGroup(placement: .topBarTrailing) {
+                    if let tracks {
+                        if !isDownloaded {
+                            Button(action: {
+                                if downloadProgress == nil {
+                                    try? DownloadManager.shared.createTask(for: work, withTracks: tracks)
+                                    trackDownloadProgressUpdate()
+                                } else {
+                                    DownloadManager.shared.cancelTask(for: work.id)
+                                }
+                            }, label: {
+                                if let downloadProgress {
+                                    ZStack {
+                                        Gauge(value: downloadProgress, label: {})
+                                            .gaugeStyle(.accessoryCircularCapacity)
+                                            .tint(.accentColor)
+                                            .scaleEffect(0.5)
+                                            .animation(.smooth, value: downloadProgress)
+                                        Image(systemName: "stop.fill")
+                                            .font(.system(size: 12))
+                                    }
+                                    .frame(width: 16, height: 16)
+                                } else {
+                                    Image(systemName: "arrow.down")
+                                        .font(.system(size: 14, weight: .bold))
+                                }
+                            })
+                            .buttonStyle(.bordered)
+                            .buttonBorderShape(.circle)
+                        } else {
+                            Menu {
+                                Button("移除下载", systemImage: "trash", role: .destructive) {
+                                    DownloadManager.shared.remove(id: work.id)
+                                    isDownloaded = false
+                                    downloadProgress = nil
+                                    loadWorkInfo()
+                                    loadTrackInfo()
+                                }
+                            } label: {
+                                Image(systemName: "checkmark")
+                                    .font(.system(size: 14, weight: .bold))
+                            }
+                            .menuStyle(.button)
+                            .buttonStyle(.bordered)
+                            .buttonBorderShape(.circle)
+                        }
+                    }
                     Menu {
                         work.contextActions
                     } label: {
@@ -260,6 +323,7 @@ struct WorkDetailView: View {
                     .menuStyle(.button)
                     .buttonStyle(.bordered)
                     .buttonBorderShape(.circle)
+                    .padding(.horizontal, -10)
                 }
             }
         }
@@ -325,27 +389,75 @@ struct WorkDetailView: View {
             loadWorkInfo()
             loadTrackInfo()
         }
+        .onDisappear {
+            downloadProgressUpdateTimer?.invalidate()
+        }
+    }
+    
+    func trackDownloadProgressUpdate() {
+        downloadProgressUpdateTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
+            let newProgress = DownloadManager.shared.progress(for: id)
+            if _slowPath(newProgress == 1 || (downloadProgress != nil && newProgress == nil)) {
+                downloadProgressUpdateTimer?.invalidate()
+                if newProgress == 1 {
+                    isDownloaded = true
+                    loadWorkInfo()
+                    loadTrackInfo()
+                }
+            }
+            downloadProgress = newProgress
+        }
     }
     
     func loadWorkInfo() {
-        requestString("https://api.asmr.one/api/work/\(id)", headers: globalRequestHeaders) { respStr, isSuccess in
-            if isSuccess {
-                work = getJsonData(Work.self, from: respStr) ?? nil
-                if let work {
-                    requestJSON("https://api.asmr.one/api/recommender/item-neighbors", method: .post, parameters: ["keyword": "", "itemId": String(work.id), "localSubtitledWorks": [], "withPlaylistStatus": []], encoding: JSONEncoding.default, headers: globalRequestHeaders) { respJson, isSuccess in
-                        if isSuccess {
-                            relatedWorks = getJsonData([Work].self, from: respJson["works"].rawString()!) ?? []
-                        }
+        Task {
+            isDownloaded = DownloadManager.shared.isDownloaded(for: id)
+            if !isDownloaded {
+                let result = await requestString("https://api.asmr.one/api/work/\(id)", headers: globalRequestHeaders)
+                if case let .success(respStr) = result {
+                    work = getJsonData(Work.self, from: respStr) ?? nil
+                }
+            } else {
+                work = DownloadManager.shared.work(of: id)
+            }
+            if let work {
+                downloadProgress = DownloadManager.shared.progress(for: work.id)
+                if let progress = downloadProgress, progress < 1 {
+                    trackDownloadProgressUpdate()
+                }
+                requestJSON("https://api.asmr.one/api/recommender/item-neighbors", method: .post, parameters: ["keyword": "", "itemId": String(work.id), "localSubtitledWorks": [], "withPlaylistStatus": []], encoding: JSONEncoding.default, headers: globalRequestHeaders) { respJson, isSuccess in
+                    if isSuccess {
+                        relatedWorks = getJsonData([Work].self, from: respJson["works"].rawString()!) ?? []
                     }
+                }
+                var recentWorks = [Work]()
+                if let _recentData = try? Data(contentsOf: URL(filePath: NSHomeDirectory() + "/Documents/Recents.plist")),
+                   let recents = try? PropertyListDecoder().decode([Work].self, from: _recentData) {
+                    recentWorks = recents
+                }
+                if !recentWorks.contains(work) {
+                    recentWorks.insert(work, at: 0)
+                } else {
+                    recentWorks.move(fromOffsets: [recentWorks.firstIndex(of: work)!], toOffset: 0)
+                }
+                let encoder = PropertyListEncoder()
+                encoder.outputFormat = .binary
+                if let recentData = try? encoder.encode(recentWorks) {
+                    try? recentData.write(to: URL(filePath: NSHomeDirectory() + "/Documents/Recents.plist"))
                 }
             }
         }
     }
     func loadTrackInfo() {
-        requestString("https://api.asmr.one/api/tracks/\(id)?v=1", headers: globalRequestHeaders) { respStr, isSuccess in
-            if isSuccess {
-                tracks = getJsonData([TrackStructure].self, from: respStr) ?? nil
+        isDownloaded = DownloadManager.shared.isDownloaded(for: id)
+        if !isDownloaded {
+            requestString("https://api.asmr.one/api/tracks/\(id)?v=1", headers: globalRequestHeaders) { respStr, isSuccess in
+                if isSuccess {
+                    tracks = getJsonData([TrackStructure].self, from: respStr) ?? nil
+                }
             }
+        } else {
+            tracks = DownloadManager.shared.tracks(of: id)
         }
     }
 }

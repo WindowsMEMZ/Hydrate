@@ -6,13 +6,16 @@
 //
 
 import SwiftUI
+import DarockUI
 import CachedAsyncImage
 import DarockFoundation
 
 struct LibraryView: View {
     @Namespace var favoriteNavigationNamespace
+    @Namespace var downloadedNavigationNamespace
     @AppStorage("AccountToken") var accountToken = ""
     @State var favoriteWorks = [Work]()
+    @State var downloadedWorks = [Work]()
     var body: some View {
         Group {
             if !accountToken.isEmpty {
@@ -61,7 +64,6 @@ struct LibraryView: View {
                                             }
                                             .frame(width: 160)
                                         }
-                                        .scrollTargetLayout()
                                         .contextMenu {
                                             work.contextActions
                                         } preview: {
@@ -69,9 +71,58 @@ struct LibraryView: View {
                                         }
                                     }
                                 }
+                                .scrollTargetLayout()
+                                .scrollTransition { content, _ in
+                                    content.offset(x: 14)
+                                }
                             }
                             .scrollIndicators(.never)
                             .scrollTargetBehavior(.viewAligned)
+                            .padding(.horizontal, -16)
+                        }
+                        if !downloadedWorks.isEmpty {
+                            Text("已下载")
+                                .font(.system(size: 22, weight: .bold))
+                                .foregroundStyle(Color.primary)
+                            LazyVGrid(columns: [.init(), .init()], spacing: 6) {
+                                ForEach(downloadedWorks) { work in
+                                    NavigationLink {
+                                        WorkDetailView(id: work.id)
+                                            .navigationTransition(.zoom(sourceID: work.id, in: downloadedNavigationNamespace))
+                                    } label: {
+                                        VStack(alignment: .leading) {
+                                            CachedAsyncImage(url: URL(string: work.mainCoverUrl)) { image in
+                                                image.resizable()
+                                            } placeholder: {
+                                                Rectangle()
+                                                    .fill(Color.gray)
+                                                    .redacted(reason: .placeholder)
+                                            }
+                                            .scaledToFill()
+                                            .frame(width: UIScreen.main.bounds.width / 2 - 24, height: UIScreen.main.bounds.width / 2 - 24)
+                                            .clipped()
+                                            .cornerRadius(7)
+                                            .overlay(RoundedRectangle(cornerRadius: 7).strokeBorder(Color.gray.opacity(0.6)))
+                                            .matchedTransitionSource(id: work.id, in: downloadedNavigationNamespace)
+                                            Text(work.title)
+                                                .font(.system(size: 12, weight: .medium))
+                                                .lineLimit(1)
+                                                .foregroundStyle(Color.primary)
+                                            Text(work.vas.map { $0.name }.joined(separator: "/"))
+                                                .font(.system(size: 12))
+                                                .lineLimit(1)
+                                                .foregroundStyle(.gray)
+                                        }
+                                    }
+                                    .contextMenu {
+                                        work.contextActions
+                                    } preview: {
+                                        work.previewView
+                                    }
+                                }
+                            }
+                            .centerAligned()
+                            .padding(.horizontal, -10)
                         }
                     }
                     .padding()
@@ -83,7 +134,7 @@ struct LibraryView: View {
                     refresh()
                 }
             } else {
-                Text("请先登录")
+                ContentUnavailableView("尚未登录", systemImage: "person.crop.circle.badge.questionmark.fill", description: Text("在“账户”页面登录以访问资料库"))
             }
         }
         .navigationTitle("资料库")
@@ -95,6 +146,7 @@ struct LibraryView: View {
                 favoriteWorks = getJsonData([Work].self, from: respJson["works"].rawString()!) ?? []
             }
         }
+        downloadedWorks = DownloadManager.shared.downloadedWorks()
     }
     
     struct FavoritesView: View {

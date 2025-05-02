@@ -182,6 +182,9 @@ struct NowPlayingView: View {
                                                                        toleranceBefore: .zero,
                                                                        toleranceAfter: .zero)
                                                 currentPlaybackTime = progressDragingNewTime
+                                                var nowPlayingInfo = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [String: Any]()
+                                                nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = currentPlaybackTime
+                                                MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
                                                 isProgressDraging = false
                                             }
                                     )
@@ -207,6 +210,9 @@ struct NowPlayingView: View {
                                         to: CMTime(seconds: globalAudioPlayer.currentTime().seconds - 10, preferredTimescale: 60000),
                                         toleranceBefore: .zero,
                                         toleranceAfter: .zero)
+                                    var nowPlayingInfo = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [String: Any]()
+                                    nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = globalAudioPlayer.currentTime().seconds - 10
+                                    MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
                                     resetMenuDismissTimer()
                                 }, label: {
                                     Image(systemName: "10.arrow.trianglehead.counterclockwise")
@@ -233,6 +239,9 @@ struct NowPlayingView: View {
                                         to: CMTime(seconds: globalAudioPlayer.currentTime().seconds + 10, preferredTimescale: 60000),
                                         toleranceBefore: .zero,
                                         toleranceAfter: .zero)
+                                    var nowPlayingInfo = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [String: Any]()
+                                    nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = globalAudioPlayer.currentTime().seconds + 10
+                                    MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
                                     resetMenuDismissTimer()
                                 }, label: {
                                     Image(systemName: "10.arrow.trianglehead.clockwise")

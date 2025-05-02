@@ -10,10 +10,14 @@ import DarockUI
 import Alamofire
 import CachedAsyncImage
 import DarockFoundation
+import SwiftUIIntrospect
 
 struct HomeView: View {
+    @Namespace var userSuggestionNavigationNamespace
     @Namespace var popularNavigationNamespace
     @Namespace var allWorkNavigationNamespace
+    @AppStorage("AccountToken") var accountToken = ""
+    @State var userSuggestionWorks = [Work]()
     @State var popularWorks = [Work]()
     @State var allWorks = [Work]()
     @State var currentPage = 1
@@ -22,6 +26,57 @@ struct HomeView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading) {
+                if !userSuggestionWorks.isEmpty {
+                    Text("专属精选推荐")
+                        .font(.system(size: 22, weight: .bold))
+                    ScrollView(.horizontal) {
+                        HStack(spacing: 0) {
+                            ForEach(userSuggestionWorks) { work in
+                                NavigationLink {
+                                    WorkDetailView(id: work.id)
+                                        .navigationTransition(.zoom(sourceID: work.id, in: userSuggestionNavigationNamespace))
+                                } label: {
+                                    VStack(alignment: .leading) {
+                                        CachedAsyncImage(url: URL(string: work.mainCoverUrl)) { image in
+                                            image.resizable()
+                                        } placeholder: {
+                                            Rectangle()
+                                                .fill(Color.gray)
+                                                .redacted(reason: .placeholder)
+                                        }
+                                        .scaledToFill()
+                                        .frame(width: 150, height: 150)
+                                        .clipped()
+                                        .cornerRadius(7)
+                                        .matchedTransitionSource(id: work.id, in: userSuggestionNavigationNamespace)
+                                        Text(work.title)
+                                            .font(.system(size: 12, weight: .medium))
+                                            .lineLimit(1)
+                                            .foregroundStyle(Color.primary)
+                                        Text(work.vas.map { $0.name }.joined(separator: "/"))
+                                            .font(.system(size: 12))
+                                            .lineLimit(1)
+                                            .foregroundStyle(.gray)
+                                    }
+                                    .frame(width: 160)
+                                }
+                                .contextMenu {
+                                    work.contextActions
+                                } preview: {
+                                    work.previewView
+                                }
+                            }
+                        }
+                        .scrollTargetLayout()
+                        .scrollTransition { content, _ in
+                            content.offset(x: 14)
+                        }
+                    }
+                    .scrollIndicators(.never)
+                    .scrollTargetBehavior(.viewAligned)
+                    .padding(.bottom, 2)
+                    .padding(.horizontal, -16)
+                }
                 Text("热门")
                     .font(.system(size: 22, weight: .bold))
                 if !popularWorks.isEmpty {
@@ -56,7 +111,6 @@ struct HomeView: View {
                                     }
                                     .frame(width: 160)
                                 }
-                                .scrollTargetLayout()
                                 .contextMenu {
                                     work.contextActions
                                 } preview: {
@@ -64,9 +118,14 @@ struct HomeView: View {
                                 }
                             }
                         }
+                        .scrollTargetLayout()
+                        .scrollTransition { content, _ in
+                            content.offset(x: 14)
+                        }
                     }
                     .scrollIndicators(.never)
                     .scrollTargetBehavior(.viewAligned)
+                    .padding(.horizontal, -16)
                 } else {
                     ProgressView()
                         .controlSize(.large)
@@ -90,7 +149,7 @@ struct HomeView: View {
                                             .redacted(reason: .placeholder)
                                     }
                                     .scaledToFill()
-                                    .frame(width: 160, height: 160)
+                                    .frame(width: UIScreen.main.bounds.width / 2 - 24, height: UIScreen.main.bounds.width / 2 - 24)
                                     .clipped()
                                     .cornerRadius(7)
                                     .overlay(RoundedRectangle(cornerRadius: 7).strokeBorder(Color.gray.opacity(0.6)))
@@ -117,6 +176,8 @@ struct HomeView: View {
                             }
                         }
                     }
+                    .centerAligned()
+                    .padding(.horizontal, -10)
                     if isLoadingMore {
                         ProgressView()
                             .controlSize(.large)
@@ -142,6 +203,13 @@ struct HomeView: View {
     }
     
     func refresh() {
+        if !accountToken.isEmpty {
+            requestJSON("https://api.asmr.one/api/recommender/recommend-for-user", method: .post, parameters: ["keyword": " ", "page": 1, "subtitle": 0, "localSubtitledWorks": [], "withPlaylistStatus": []], encoding: JSONEncoding.default, headers: globalRequestHeaders) { respJson, isSuccess in
+                if isSuccess {
+                    userSuggestionWorks = getJsonData([Work].self, from: respJson["works"].rawString()!) ?? []
+                }
+            }
+        }
         requestJSON("https://api.asmr.one/api/recommender/popular", method: .post, parameters: ["keyword": " ", "page": 1, "subtitle": 0, "localSubtitledWorks": [], "withPlaylistStatus": []], encoding: JSONEncoding.default) { respJson, isSuccess in
             if isSuccess {
                 popularWorks = getJsonData([Work].self, from: respJson["works"].rawString()!) ?? []

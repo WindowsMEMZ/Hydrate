@@ -17,7 +17,7 @@ struct Pagination: Decodable {
     var totalCount: Int
 }
 
-struct Work: Identifiable, Codable {
+struct Work: Identifiable, Equatable, Codable {
     var id: Int
     var title: String
     var circle_id: Int
@@ -101,6 +101,26 @@ struct Work: Identifiable, Codable {
                         }
                     }
                 }
+                if !DownloadManager.shared.isDownloaded(for: id) {
+                    Button("下载", systemImage: "arrow.down.circle") {
+                        requestString("https://api.asmr.one/api/tracks/\(id)?v=1", headers: globalRequestHeaders) { respStr, isSuccess in
+                            if isSuccess, let tracks = getJsonData([TrackStructure].self, from: respStr) {
+                                try? DownloadManager.shared.createTask(for: self, withTracks: tracks)
+                            }
+                        }
+                    }
+                } else if let progress = DownloadManager.shared.progress(for: id), progress < 1 {
+                    Button(action: {
+                        DownloadManager.shared.cancelTask(for: id)
+                    }, label: {
+                        Image(_internalSystemName: "stop.circle.open")
+                        Text("停止下载")
+                    })
+                } else {
+                    Button("移除下载", systemImage: "trash", role: .destructive) {
+                        DownloadManager.shared.remove(id: id)
+                    }
+                }
             }
         }
         Section {
@@ -109,6 +129,10 @@ struct Work: Identifiable, Codable {
             }
             ShareLink("分享作品...", item: URL(string: "https://www.asmr.one/work/\(self.source_id)")!)
         }
+    }
+    
+    static func ==(lhs: Self, rhs: Self) -> Bool {
+        lhs.id == rhs.id
     }
     
     struct Rank: Codable {
@@ -279,4 +303,11 @@ struct RecentSearchItem: Identifiable, Hashable, Equatable, Codable {
     static func ==(lhs: Self, rhs: Self) -> Bool {
         lhs.tokens == rhs.tokens && lhs.text == rhs.text
     }
+}
+
+struct DownloadWorkBundleInfo: Codable {
+    var bundleVersion: Int = 1
+    var work: Work
+    var tracks: [TrackStructure]
+    var dateCreated: Date
 }
