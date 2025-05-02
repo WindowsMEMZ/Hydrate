@@ -3,14 +3,19 @@
 来听听 ASMR 吧！
 
 <div align="center">
-    <img src="Artwork/RMAppIcon.svg" alt="App 图标" width=200 height=200 />
+    <img src="Artwork/AppIcon.png" alt="App 图标" width=200 height=200 />
 </div>
 
 Hydrate 是 iOS 端的 ASMR 音频浏览及播放器，内容来自 [asmr.one](https://asmr.one)。
 
 App 采用类似 Apple Music 的 UI 设计，并支持滚动字幕，助你在听音声时拥有更加“原生”的体验。
 
-<img src="Artwork/Screenshots/Screenshots.svg" />
+<div align="center">
+    <img src="Artwork/Screenshots/Home.png" alt="App 主页截图" width=292.5 height=633 />
+    <img src="Artwork/Screenshots/WorkDetail.png" alt="作品详情页截图" width=292.5 height=633 />
+    <img src="Artwork/Screenshots/Library.png" alt="资料库页截图" width=292.5 height=633 />
+    <img src="Artwork/Screenshots/Search.png" alt="搜索页截图" width=292.5 height=633 />
+</div>
 
 ## 构建
 
