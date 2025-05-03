@@ -12,8 +12,6 @@ import DarockFoundation
 import SDWebImageSwiftUI
 
 struct HomeView: View {
-    @Namespace var userSuggestionNavigationNamespace
-    @Namespace var popularNavigationNamespace
     @Namespace var allWorkNavigationNamespace
     @AppStorage("AccountToken") var accountToken = ""
     @State var userSuggestionWorks = [Work]()
@@ -25,164 +23,24 @@ struct HomeView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading) {
-                if !userSuggestionWorks.isEmpty {
+                if !accountToken.isEmpty {
                     Text("专属精选推荐")
                         .font(.system(size: 22, weight: .bold))
-                    ScrollView(.horizontal) {
-                        LazyHStack(spacing: 0) {
-                            ForEach(userSuggestionWorks) { work in
-                                NavigationLink {
-                                    WorkDetailView(id: work.id)
-                                        .navigationTransition(.zoom(sourceID: work.id, in: userSuggestionNavigationNamespace))
-                                } label: {
-                                    VStack(alignment: .leading) {
-                                        WebImage(url: URL(string: work.mainCoverUrl)) { image in
-                                            image.resizable()
-                                        } placeholder: {
-                                            Rectangle()
-                                                .fill(Color.gray)
-                                                .redacted(reason: .placeholder)
-                                        }
-                                        .scaledToFill()
-                                        .frame(width: 150, height: 150)
-                                        .clipped()
-                                        .cornerRadius(7)
-                                        .matchedTransitionSource(id: work.id, in: userSuggestionNavigationNamespace)
-                                        Text(work.title)
-                                            .font(.system(size: 12, weight: .medium))
-                                            .lineLimit(1)
-                                            .foregroundStyle(Color.primary)
-                                        Text(work.vas.map { $0.name }.joined(separator: "/"))
-                                            .font(.system(size: 12))
-                                            .lineLimit(1)
-                                            .foregroundStyle(.gray)
-                                    }
-                                    .frame(width: 160)
-                                }
-                                .contextMenu {
-                                    work.contextActions
-                                } preview: {
-                                    work.previewView
-                                }
-                            }
-                        }
-                        .scrollTargetLayout()
-                        .scrollTransition { content, _ in
-                            content.offset(x: 14)
-                        }
-                    }
-                    .scrollIndicators(.never)
-                    .scrollTargetBehavior(.viewAligned)
-                    .padding(.bottom, 2)
-                    .padding(.horizontal, -16)
+                    WorkListView(works: userSuggestionWorks)
                 }
                 Text("热门")
                     .font(.system(size: 22, weight: .bold))
-                if !popularWorks.isEmpty {
-                    ScrollView(.horizontal) {
-                        LazyHStack(spacing: 0) {
-                            ForEach(popularWorks) { work in
-                                NavigationLink {
-                                    WorkDetailView(id: work.id)
-                                        .navigationTransition(.zoom(sourceID: work.id, in: popularNavigationNamespace))
-                                } label: {
-                                    VStack(alignment: .leading) {
-                                        WebImage(url: URL(string: work.mainCoverUrl)) { image in
-                                            image.resizable()
-                                        } placeholder: {
-                                            Rectangle()
-                                                .fill(Color.gray)
-                                                .redacted(reason: .placeholder)
-                                        }
-                                        .scaledToFill()
-                                        .frame(width: 150, height: 150)
-                                        .clipped()
-                                        .cornerRadius(7)
-                                        .matchedTransitionSource(id: work.id, in: popularNavigationNamespace)
-                                        Text(work.title)
-                                            .font(.system(size: 12, weight: .medium))
-                                            .lineLimit(1)
-                                            .foregroundStyle(Color.primary)
-                                        Text(work.vas.map { $0.name }.joined(separator: "/"))
-                                            .font(.system(size: 12))
-                                            .lineLimit(1)
-                                            .foregroundStyle(.gray)
-                                    }
-                                    .frame(width: 160)
-                                }
-                                .contextMenu {
-                                    work.contextActions
-                                } preview: {
-                                    work.previewView
-                                }
-                            }
-                        }
-                        .scrollTargetLayout()
-                        .scrollTransition { content, _ in
-                            content.offset(x: 14)
-                        }
-                    }
-                    .scrollIndicators(.never)
-                    .scrollTargetBehavior(.viewAligned)
-                    .padding(.horizontal, -16)
-                } else {
-                    ProgressView()
-                        .controlSize(.large)
-                        .centerAligned()
-                }
+                WorkListView(works: popularWorks)
                 Text("所有作品")
                     .font(.system(size: 22, weight: .bold))
-                if !allWorks.isEmpty {
-                    LazyVGrid(columns: [.init(), .init()], spacing: 6) {
-                        ForEach(allWorks) { work in
-                            NavigationLink {
-                                WorkDetailView(id: work.id)
-                                    .navigationTransition(.zoom(sourceID: work.id, in: allWorkNavigationNamespace))
-                            } label: {
-                                VStack(alignment: .leading) {
-                                    WebImage(url: URL(string: work.mainCoverUrl)) { image in
-                                        image.resizable()
-                                    } placeholder: {
-                                        Rectangle()
-                                            .fill(Color.gray)
-                                            .redacted(reason: .placeholder)
-                                    }
-                                    .scaledToFill()
-                                    .frame(width: UIScreen.main.bounds.width / 2 - 24, height: UIScreen.main.bounds.width / 2 - 24)
-                                    .clipped()
-                                    .cornerRadius(7)
-                                    .overlay(RoundedRectangle(cornerRadius: 7).strokeBorder(Color.gray.opacity(0.6)))
-                                    .matchedTransitionSource(id: work.id, in: allWorkNavigationNamespace)
-                                    Text(work.title)
-                                        .font(.system(size: 12, weight: .medium))
-                                        .lineLimit(1)
-                                        .foregroundStyle(Color.primary)
-                                    Text(work.vas.map { $0.name }.joined(separator: "/"))
-                                        .font(.system(size: 12))
-                                        .lineLimit(1)
-                                        .foregroundStyle(.gray)
-                                }
-                            }
-                            .contextMenu {
-                                work.contextActions
-                            } preview: {
-                                work.previewView
-                            }
-                            .onAppear {
-                                if work.id == allWorks.last?.id && !isLoadingMore && currentPage <= totalPage {
-                                    loadMore()
-                                }
-                            }
+                WorkListView(works: allWorks)
+                    .workListStyle(.grid)
+                    .onLastItemAppear {
+                        if !isLoadingMore && currentPage <= totalPage {
+                            loadMore()
                         }
                     }
-                    .centerAligned()
-                    .padding(.horizontal, -10)
-                    if isLoadingMore {
-                        ProgressView()
-                            .controlSize(.large)
-                            .centerAligned()
-                    }
-                } else {
+                if isLoadingMore {
                     ProgressView()
                         .controlSize(.large)
                         .centerAligned()

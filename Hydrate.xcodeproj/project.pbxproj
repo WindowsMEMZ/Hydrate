@@ -12,6 +12,7 @@
 		8C0E54FA2DC4E14800FE6B5B /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 8C0E54F92DC4E14800FE6B5B /* Localizable.xcstrings */; };
 		8C0E55042DC4E19A00FE6B5B /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 8C0E55022DC4E19A00FE6B5B /* InfoPlist.strings */; };
 		8C0E550A2DC4EDCF00FE6B5B /* SDWebImageSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 8C0E55092DC4EDCF00FE6B5B /* SDWebImageSwiftUI */; };
+		8C0E550C2DC5DC6A00FE6B5B /* WorkListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C0E550B2DC5DC6200FE6B5B /* WorkListView.swift */; };
 		8C39621F2DC2225600372D10 /* ASMROneApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C39621B2DC2225600372D10 /* ASMROneApp.swift */; };
 		8C3962202DC2225600372D10 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C39621D2DC2225600372D10 /* ContentView.swift */; };
 		8C3962222DC2225600372D10 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8C39621C2DC2225600372D10 /* Assets.xcassets */; };
@@ -44,6 +45,7 @@
 		8C0E54C02DC4944100FE6B5B /* RecentsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecentsView.swift; sourceTree = "<group>"; };
 		8C0E54F92DC4E14800FE6B5B /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		8C0E55032DC4E19A00FE6B5B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		8C0E550B2DC5DC6200FE6B5B /* WorkListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkListView.swift; sourceTree = "<group>"; };
 		8C3962082DC2220400372D10 /* Hydrate.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Hydrate.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8C39621B2DC2225600372D10 /* ASMROneApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASMROneApp.swift; sourceTree = "<group>"; };
 		8C39621C2DC2225600372D10 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -132,6 +134,7 @@
 				8C39621B2DC2225600372D10 /* ASMROneApp.swift */,
 				8CD0E1A62DC24F5B00997186 /* LyricParsers.swift */,
 				8C0E54BE2DC46B1D00FE6B5B /* DownloadManager.swift */,
+				8C0E550B2DC5DC6200FE6B5B /* WorkListView.swift */,
 				8C39621D2DC2225600372D10 /* ContentView.swift */,
 				8CD0E1902DC2266200997186 /* HomeView.swift */,
 				8C0E54C02DC4944100FE6B5B /* RecentsView.swift */,
@@ -267,6 +270,7 @@
 				8CD0E1A22DC24ADF00997186 /* ClosedRange+.swift in Sources */,
 				8CD0E1E02DC45C3700997186 /* AboutView.swift in Sources */,
 				8CD0E1CF2DC3225900997186 /* AccountView.swift in Sources */,
+				8C0E550C2DC5DC6A00FE6B5B /* WorkListView.swift in Sources */,
 				8C0E54C12DC4944600FE6B5B /* RecentsView.swift in Sources */,
 				8CD0E1CB2DC27B0E00997186 /* SearchView.swift in Sources */,
 			);

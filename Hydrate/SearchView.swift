@@ -22,47 +22,13 @@ struct SearchView: View {
     @State var recentSearches = [RecentSearchItem]()
     var body: some View {
         List {
-            ForEach(searchResults) { work in
-                NavigationLink { WorkDetailView(id: work.id) } label: {
-                    HStack {
-                        WebImage(url: URL(string: work.mainCoverUrl)) { image in
-                            image.resizable()
-                        } placeholder: {
-                            Rectangle()
-                                .fill(Color.gray)
-                                .redacted(reason: .placeholder)
-                        }
-                        .scaledToFill()
-                        .frame(width: 60, height: 60)
-                        .clipped()
-                        .cornerRadius(6)
-                        VStack(alignment: .leading) {
-                            Text(work.title)
-                                .font(.system(size: 13))
-                                .lineLimit(1)
-                                .foregroundStyle(Color.primary)
-                            Text(work.vas.map { $0.name }.joined(separator: "/"))
-                                .font(.system(size: 12))
-                                .lineLimit(1)
-                                .foregroundStyle(.gray)
-                            Text(work.tags.map(\.name).joined(separator: "·"))
-                                .font(.system(size: 12))
-                                .lineLimit(1)
-                                .foregroundStyle(.gray)
-                        }
-                    }
-                }
-                .contextMenu {
-                    work.contextActions
-                } preview: {
-                    work.previewView
-                }
-                .onAppear {
-                    if work.id == searchResults.last?.id && !isLoadingMore && currentPage <= totalPage {
+            WorkListView(works: searchResults)
+                .workListStyle(.plain)
+                .onLastItemAppear {
+                    if !isLoadingMore && currentPage <= totalPage {
                         loadMore()
                     }
                 }
-            }
             if isLoadingMore {
                 ProgressView()
                     .centerAligned()

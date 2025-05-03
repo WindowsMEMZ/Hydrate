@@ -11,8 +11,6 @@ import DarockFoundation
 import SDWebImageSwiftUI
 
 struct LibraryView: View {
-    @Namespace var favoriteNavigationNamespace
-    @Namespace var downloadedNavigationNamespace
     @AppStorage("AccountToken") var accountToken = ""
     @State var favoriteWorks = [Work]()
     @State var downloadedWorks = [Work]()
@@ -33,96 +31,14 @@ struct LibraryView: View {
                                 }
                             })
                             .buttonStyle(.borderless)
-                            ScrollView(.horizontal) {
-                                LazyHStack(spacing: 0) {
-                                    ForEach(favoriteWorks) { work in
-                                        NavigationLink {
-                                            WorkDetailView(id: work.id)
-                                                .navigationTransition(.zoom(sourceID: work.id, in: favoriteNavigationNamespace))
-                                        } label: {
-                                            VStack(alignment: .leading) {
-                                                WebImage(url: URL(string: work.mainCoverUrl)) { image in
-                                                    image.resizable()
-                                                } placeholder: {
-                                                    Rectangle()
-                                                        .fill(Color.gray)
-                                                        .redacted(reason: .placeholder)
-                                                }
-                                                .scaledToFill()
-                                                .frame(width: 150, height: 150)
-                                                .clipped()
-                                                .cornerRadius(7)
-                                                .matchedTransitionSource(id: work.id, in: favoriteNavigationNamespace)
-                                                Text(work.title)
-                                                    .font(.system(size: 12, weight: .medium))
-                                                    .lineLimit(1)
-                                                    .foregroundStyle(Color.primary)
-                                                Text(work.vas.map { $0.name }.joined(separator: "/"))
-                                                    .font(.system(size: 12))
-                                                    .lineLimit(1)
-                                                    .foregroundStyle(.gray)
-                                            }
-                                            .frame(width: 160)
-                                        }
-                                        .contextMenu {
-                                            work.contextActions
-                                        } preview: {
-                                            work.previewView
-                                        }
-                                    }
-                                }
-                                .scrollTargetLayout()
-                                .scrollTransition { content, _ in
-                                    content.offset(x: 14)
-                                }
-                            }
-                            .scrollIndicators(.never)
-                            .scrollTargetBehavior(.viewAligned)
-                            .padding(.horizontal, -16)
+                            WorkListView(works: favoriteWorks)
                         }
                         if !downloadedWorks.isEmpty {
                             Text("已下载")
                                 .font(.system(size: 22, weight: .bold))
                                 .foregroundStyle(Color.primary)
-                            LazyVGrid(columns: [.init(), .init()], spacing: 6) {
-                                ForEach(downloadedWorks) { work in
-                                    NavigationLink {
-                                        WorkDetailView(id: work.id)
-                                            .navigationTransition(.zoom(sourceID: work.id, in: downloadedNavigationNamespace))
-                                    } label: {
-                                        VStack(alignment: .leading) {
-                                            WebImage(url: URL(string: work.mainCoverUrl)) { image in
-                                                image.resizable()
-                                            } placeholder: {
-                                                Rectangle()
-                                                    .fill(Color.gray)
-                                                    .redacted(reason: .placeholder)
-                                            }
-                                            .scaledToFill()
-                                            .frame(width: UIScreen.main.bounds.width / 2 - 24, height: UIScreen.main.bounds.width / 2 - 24)
-                                            .clipped()
-                                            .cornerRadius(7)
-                                            .overlay(RoundedRectangle(cornerRadius: 7).strokeBorder(Color.gray.opacity(0.6)))
-                                            .matchedTransitionSource(id: work.id, in: downloadedNavigationNamespace)
-                                            Text(work.title)
-                                                .font(.system(size: 12, weight: .medium))
-                                                .lineLimit(1)
-                                                .foregroundStyle(Color.primary)
-                                            Text(work.vas.map { $0.name }.joined(separator: "/"))
-                                                .font(.system(size: 12))
-                                                .lineLimit(1)
-                                                .foregroundStyle(.gray)
-                                        }
-                                    }
-                                    .contextMenu {
-                                        work.contextActions
-                                    } preview: {
-                                        work.previewView
-                                    }
-                                }
-                            }
-                            .centerAligned()
-                            .padding(.horizontal, -10)
+                            WorkListView(works: downloadedWorks)
+                                .workListStyle(.grid)
                         }
                     }
                     .padding()
@@ -158,43 +74,13 @@ struct LibraryView: View {
         @State var isLoadingMore = false
         var body: some View {
             List {
-                ForEach(favoriteWorks) { work in
-                    NavigationLink { WorkDetailView(id: work.id) } label: {
-                        HStack {
-                            WebImage(url: URL(string: work.mainCoverUrl)) { image in
-                                image.resizable()
-                            } placeholder: {
-                                Rectangle()
-                                    .fill(Color.gray)
-                                    .redacted(reason: .placeholder)
-                            }
-                            .scaledToFill()
-                            .frame(width: 60, height: 60)
-                            .clipped()
-                            .cornerRadius(6)
-                            VStack(alignment: .leading) {
-                                Text(work.title)
-                                    .font(.system(size: 13))
-                                    .lineLimit(1)
-                                    .foregroundStyle(Color.primary)
-                                Text(work.vas.map { $0.name }.joined(separator: "/"))
-                                    .font(.system(size: 12))
-                                    .lineLimit(1)
-                                    .foregroundStyle(.gray)
-                            }
-                        }
-                    }
-                    .contextMenu {
-                        work.contextActions
-                    } preview: {
-                        work.previewView
-                    }
-                    .onAppear {
-                        if work.id == favoriteWorks.last?.id && !isLoadingMore && currentPage <= totalPage {
+                WorkListView(works: favoriteWorks)
+                    .workListStyle(.plain)
+                    .onLastItemAppear {
+                        if !isLoadingMore && currentPage <= totalPage {
                             loadMore()
                         }
                     }
-                }
                 if isLoadingMore {
                     ProgressView()
                         .centerAligned()
