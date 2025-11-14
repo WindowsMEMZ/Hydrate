@@ -429,8 +429,6 @@ struct WorkDetailView: View {
                                         .font(.system(size: 14, weight: .bold))
                                 }
                             })
-                            .buttonStyle(.bordered)
-                            .buttonBorderShape(.circle)
                         } else {
                             Menu {
                                 Button("移除下载", systemImage: "trash", role: .destructive) {
@@ -445,8 +443,6 @@ struct WorkDetailView: View {
                                     .font(.system(size: 14, weight: .bold))
                             }
                             .menuStyle(.button)
-                            .buttonStyle(.bordered)
-                            .buttonBorderShape(.circle)
                         }
                     }
                     Menu {
@@ -456,8 +452,6 @@ struct WorkDetailView: View {
                             .padding(5)
                     }
                     .menuStyle(.button)
-                    .buttonStyle(.bordered)
-                    .buttonBorderShape(.circle)
                     .padding(.horizontal, -10)
                 }
             }

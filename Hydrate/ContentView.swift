@@ -34,12 +34,8 @@ struct ContentView: View {
                     let slider = _volumeView.subviews.first(where: { $0 is UISlider }) as! UISlider
                     slider.value = value
                 }
-            TabView(selection: $tabSelection.onUpdate { oldValue, newValue in
-                if oldValue == newValue && newValue == 3 {
-                    isSearchKeyboardFocused = true
-                }
-            }) {
-                Group {
+            TabView(selection: $tabSelection) {
+                Tab(value: 1) {
                     NavigationStack {
                         HomeView()
                             .toolbar {
@@ -54,11 +50,11 @@ struct ContentView: View {
                                 }
                             }
                     }
-                    .tag(1)
-                    .tabItem {
-                        Image(_internalSystemName: "home.fill")
-                        Text("主页")
-                    }
+                } label: {
+                    Image(_internalSystemName: "home.fill")
+                    Text("主页")
+                }
+                Tab("最近浏览", systemImage: "clock.fill", value: 4) {
                     NavigationStack {
                         RecentsView()
                             .toolbar {
@@ -73,11 +69,8 @@ struct ContentView: View {
                                 }
                             }
                     }
-                    .tag(4)
-                    .tabItem {
-                        Image(systemName: "clock.fill")
-                        Text("最近浏览")
-                    }
+                }
+                Tab("资料库", systemImage: "rectangle.stack.fill", value: 2) {
                     NavigationStack {
                         LibraryView()
                             .toolbar {
@@ -92,11 +85,8 @@ struct ContentView: View {
                                 }
                             }
                     }
-                    .tag(2)
-                    .tabItem {
-                        Image(systemName: "rectangle.stack.fill")
-                        Text("资料库")
-                    }
+                }
+                Tab("搜索", systemImage: "magnifyingglass", value: 3, role: .search) {
                     NavigationStack {
                         SearchView(isSearchKeyboardFocused: $isSearchKeyboardFocused)
                             .toolbar {
@@ -111,27 +101,10 @@ struct ContentView: View {
                                 }
                             }
                     }
-                    .tag(3)
-                    .tabItem {
-                        Image(systemName: "magnifyingglass")
-                        Text("搜索")
-                    }
                 }
-                .overlay {
-                    VStack {
-                        Spacer()
-                        nowPlayingView
-                    }
-                }
-                .ignoresSafeArea(.keyboard)
-                .ignoresSafeArea(edges: .bottom)
             }
-            .introspect(.tabView, on: .iOS(.v18...)) { tabView in
-                let tabBar = tabView.tabBar
-                let appearance = UITabBarAppearance()
-                appearance.configureWithTransparentBackground()
-                tabBar.standardAppearance = appearance
-                tabBar.scrollEdgeAppearance = appearance
+            .tabViewBottomAccessory {
+                nowPlayingView
             }
             .onReceive(performSearchSubject) { text in
                 if tabSelection != 3 {
@@ -274,7 +247,7 @@ struct ContentView: View {
                         .redacted(reason: .placeholder)
                 }
                 .scaledToFill()
-                .frame(width: 40, height: 40)
+                .frame(width: 35, height: 35)
                 .clipped()
                 .cornerRadius(10)
                 Text(nowPlayingWork.title)
@@ -289,7 +262,7 @@ struct ContentView: View {
                     }
                 }, label: {
                     Image(systemName: isNowPlaying ? "pause.fill" : "play.fill")
-                        .font(.system(size: 24))
+                        .font(.system(size: 20))
                 })
                 .buttonStyle(ControlButtonStyle())
                 .frame(width: 40, height: 40)
@@ -299,23 +272,9 @@ struct ContentView: View {
             }
         }
         .frame(height: 53)
-        .padding(.horizontal, 7)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Material.thick)
-                .shadow(radius: 5, x: 1, y: 1)
-        )
+        .padding(.horizontal)
         .onTapGesture {
             nowPlayingSheetPosition = .relativeTop(1)
         }
-        .padding(.horizontal, 10)
-        .padding(.bottom, 90)
-        .background(
-            GenericUIViewRepresentable(view: UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterial)))
-                .background(colorScheme == .dark ? Color.black.opacity(0.9) : .white.opacity(0.8))
-                .mask {
-                    LinearGradient(colors: [.black.opacity(0), .black.opacity(0), .black.opacity(0.5), .black.opacity(1), .black.opacity(1), .black.opacity(1), .black.opacity(1), .black.opacity(1), .black.opacity(1), .black.opacity(1), .black.opacity(1)], startPoint: .top, endPoint: .bottom)
-                }
-        )
     }
 }
