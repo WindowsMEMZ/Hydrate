@@ -22,6 +22,7 @@ struct ContentView: View {
     @AppStorage("MainTabSelection") var tabSelection = 1
     @State var nowPlayingSheetPosition = BottomSheetPosition.hidden
     @State var nowPlayingWork: Work?
+    @State var nowPlayingBackgroundColors = Array(repeating: Color(uiColor: .darkGray), count: 16)
     @State var isAccountManagementPresented = false
     @State var isNowPlayingStarred = false
     @State var isNowPlaying = false
@@ -175,7 +176,7 @@ struct ContentView: View {
             }
             .padding()
             .padding(.horizontal)
-            .padding(.top, 35)
+            .padding(.top, 45)
             .environment(\.colorScheme, .dark)
         } mainContent: {
             NowPlayingView()
@@ -189,7 +190,24 @@ struct ContentView: View {
         .sheetWidth(.absolute(UIScreen.main.bounds.width))
         .customAnimation(.spring(response: 0.4, dampingFraction: 1, blendDuration: 0.8))
         .customBackground {
-            Color(UIColor.darkGray)
+            MeshGradient(
+                width: 3,
+                height: 3,
+                points: [
+                    SIMD2<Float>(0.0, 0.0), SIMD2<Float>(0.5, 0.0), SIMD2<Float>(1.0, 0.0),
+                    SIMD2<Float>(0.0, 0.5), SIMD2<Float>(0.45, 0.55), SIMD2<Float>(1.0, 0.5),
+                    SIMD2<Float>(0.0, 1.0), SIMD2<Float>(0.5, 1.0), SIMD2<Float>(1.0, 1.0)
+                ],
+                colors: nowPlayingBackgroundColors,
+                background: .init(uiColor: .darkGray),
+                smoothsColors: true
+            )
+            .blur(radius: 10, opaque: true)
+            .overlay {
+                Color.black.opacity(0.6)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: true ? (UIScreen.main.value(forKey: "_displayCornerRadius") as! Double) : 0))
+            .padding(-2)
         }
         .customThreshold(0.1)
         .ignoresSafeArea(edges: .top)
@@ -208,6 +226,9 @@ struct ContentView: View {
                     if let imageUrl = URL(string: media.sourceWork.mainCoverUrl),
                        let imageData = try? Data(contentsOf: imageUrl),
                        let image = UIImage(data: imageData) {
+                        nowPlayingBackgroundColors = ColorThief.getPalette(from: image, colorCount: 16)!.map {
+                            Color(red: Double($0.r) / 255, green: Double($0.g) / 255, blue: Double($0.b) / 255)
+                        }
                         nowPlayingInfo[MPMediaItemPropertyArtwork] = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
                     }
                     nowPlayingInfo[MPMediaItemPropertyTitle] = media.playFileName
@@ -222,12 +243,15 @@ struct ContentView: View {
         }
         .onReceive(globalAudioPlayer.publisher(for: \.timeControlStatus)) { status in
             isNowPlaying = status == .playing
-            MPNowPlayingInfoCenter.default().playbackState = status == .playing ? .playing : .paused
+            if var nowPlayingInfo = MPNowPlayingInfoCenter.default().nowPlayingInfo {
+                nowPlayingInfo[MPNowPlayingInfoPropertyPlaybackRate] = isNowPlaying ? 1.0 : 0.0
+                MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
+            }
         }
         .onReceive(globalAudioPlayer.publisher(for: \.currentItem)) { item in
             if let item {
                 var nowPlayingInfo = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [String: Any]()
-                nowPlayingInfo[MPMediaItemPropertyPlaybackDuration] = item.duration.seconds
+                nowPlayingInfo[MPMediaItemPropertyPlaybackDuration] = item.asset.duration.seconds
                 nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = 0.0
                 nowPlayingInfo[MPNowPlayingInfoPropertyPlaybackRate] = 1.0
                 nowPlayingInfo[MPNowPlayingInfoPropertyDefaultPlaybackRate] = 1.0

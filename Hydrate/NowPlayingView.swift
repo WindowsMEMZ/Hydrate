@@ -12,6 +12,7 @@ import DarockUI
 import MediaPlayer
 import AVFoundation
 import DarockFoundation
+@_spi(Advanced) import SwiftUIIntrospect
 
 let globalAudioPlayer = AVPlayer()
 var nowPlayingMedia = CurrentValueSubject<NowPlayingInfo?, Never>(nil)
@@ -27,13 +28,12 @@ struct NowPlayingView: View {
     @State var isProgressDraging = false
     @State var progressDragingNewTime = 0.0
     @State var controlMenuDismissTimer: Timer?
-    @State var isSoftScrolling = true
-    @State var softScrollingResetTask: Task<Void, Never>?
     @State var isUserScrolling = false
-    @State var userScrollingResetTimer: Timer?
+    @State var canResetUserScrolling = false
+    @State var isScrollAnimationSet = false
     @State var lyricScrollProxy: ScrollViewProxy?
     @State var isVolumeDraging = false
-    @State var volumeDragingNewValue = 0.0
+    @State var volumeDragingNewValue = Double(AVAudioSession.sharedInstance().outputVolume)
     @State var currentVolume = AVAudioSession.sharedInstance().outputVolume
     @State var volumeObserver: NSKeyValueObservation?
     var body: some View {
@@ -61,7 +61,7 @@ struct NowPlayingView: View {
                                             Spacer()
                                         }
                                         .opacity(currentScrolledId == lyricKeys[i].lowerBound ? 1.0 : 0.6)
-                                        .blur(radius: currentScrolledId == lyricKeys[i].lowerBound || isUserScrolling ? 0 : abs(currentScrolledId - lyricKeys[i].lowerBound) / 3)
+                                        .blur(radius: currentScrolledId == lyricKeys[i].lowerBound || isUserScrolling ? 0 : abs(Double((lyricKeys.firstIndex { $0.lowerBound == currentScrolledId || $0.upperBound == currentScrolledId } ?? 0) - i)) * 3)
                                         .padding(.vertical, 5)
                                         .animation(.smooth, value: currentScrolledId)
                                         .modifier(LyricButtonModifier {
@@ -70,15 +70,8 @@ struct NowPlayingView: View {
                                                                    toleranceAfter: .zero)
                                             globalAudioPlayer.play()
                                             currentScrolledId = lyricKeys[i].lowerBound
-                                            isSoftScrolling = true
-                                            withAnimation(.easeOut(duration: 0.5)) {
-                                                lyricScrollProxy?.scrollTo(lyricKeys[i].lowerBound, anchor: .init(x: 0.5, y: 0.2))
-                                            }
-                                            Task {
-                                                try? await Task.sleep(for: .seconds(0.6)) // Animation may take longer time than duration
-                                                DispatchQueue.main.async {
-                                                    isSoftScrolling = false
-                                                }
+                                            withAnimation {
+                                                lyricScrollProxy?.scrollTo(lyricKeys[i].lowerBound, anchor: .init(x: 0.5, y: 0.13))
                                             }
                                         })
                                         .allowsHitTesting(isUserScrolling)
@@ -103,15 +96,23 @@ struct NowPlayingView: View {
                                 .padding(.horizontal, 30)
                                 .padding(.vertical)
                             }
-                            .withScrollOffsetUpdate()
-                            .onPreferenceChange(ScrollViewOffsetPreferenceKey.self) { _ in
-                                if !isSoftScrolling {
-                                    // Scrolled by user (not auto scrolling lyrics)
+                            .introspect(.scrollView, on: .iOS(.v18...)) { scrollView in
+                                guard !isScrollAnimationSet else { return }
+                                let animation = CASpringAnimation()
+                                animation.mass = 1
+                                animation.stiffness = 650
+                                animation.damping = 300
+                                animation.initialVelocity = 0
+                                animation.duration = animation.settlingDuration
+                                scrollView.setValue(animation, forKeyPath: "_animation._customAnimation")
+                                scrollView.setValue(animation.settlingDuration, forKey: "_contentOffsetAnimationDuration")
+                                isScrollAnimationSet = true
+                            }
+                            .onScrollPhaseChange { oldPhase, newPhase in
+                                if newPhase == .interacting || newPhase == .decelerating {
                                     isUserScrolling = true
-                                    userScrollingResetTimer?.invalidate()
-                                    userScrollingResetTimer = Timer.scheduledTimer(withTimeInterval: 2.5, repeats: false) { _ in
-                                        isUserScrolling = false
-                                    }
+                                } else {
+                                    canResetUserScrolling = true
                                 }
                             }
                             .onAppear {
@@ -132,30 +133,19 @@ struct NowPlayingView: View {
                                 if _slowPath(!isUpdatedScrollId && !lyricKeys.isEmpty) {
                                     newScrollId = lyricKeys.last!.lowerBound
                                 }
-                                if _slowPath(newScrollId != currentScrolledId && !isUserScrolling) {
-                                    softScrollingResetTask?.cancel()
-                                    currentScrolledId = newScrollId
-                                    isSoftScrolling = true
-                                    withAnimation(.easeOut(duration: 0.5)) {
-                                        scrollProxy.scrollTo(newScrollId, anchor: .init(x: 0.5, y: 0.2))
+                                if _slowPath(newScrollId != currentScrolledId) {
+                                    if canResetUserScrolling {
+                                        canResetUserScrolling = false
+                                        isUserScrolling = false
                                     }
-                                    softScrollingResetTask = Task {
-                                        do {
-                                            try await Task.sleep(for: .seconds(1.5)) // Animation may take longer time than duration
-                                            guard !Task.isCancelled else { return }
-                                            DispatchQueue.main.async {
-                                                isSoftScrolling = false
-                                            }
-                                        } catch {
-                                            // Catch if task was canceled, do nothing.
+                                    if !isUserScrolling {
+                                        currentScrolledId = newScrollId
+                                        withAnimation {
+                                            scrollProxy.scrollTo(newScrollId, anchor: .init(x: 0.5, y: 0.13))
                                         }
                                     }
                                 }
                             }
-                        }
-                        .onAppear {
-                            // rdar://FB268002074511
-                            isSoftScrolling = false
                         }
                     } else {
                         Text("文本不可用")
@@ -165,29 +155,18 @@ struct NowPlayingView: View {
                         Spacer()
                         VStack {
                             VStack {
-                                CustomProgressView(value: isProgressDraging ? progressDragingNewTime : currentPlaybackTime, total: currentItemTotalTime)
-                                    .shadow(radius: isProgressDraging ? 2 : 0)
-                                    .gesture(
-                                        DragGesture()
-                                            .onChanged { value in
-                                                isProgressDraging = true
-                                                let newTime = currentPlaybackTime + value.translation.width
-                                                if newTime >= 0 && newTime <= currentItemTotalTime {
-                                                    progressDragingNewTime = newTime
-                                                }
-                                            }
-                                            .onEnded { _ in
-                                                globalAudioPlayer.seek(to: CMTime(seconds: progressDragingNewTime, preferredTimescale: 60000),
-                                                                       toleranceBefore: .zero,
-                                                                       toleranceAfter: .zero)
-                                                currentPlaybackTime = progressDragingNewTime
-                                                var nowPlayingInfo = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [String: Any]()
-                                                nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = currentPlaybackTime
-                                                MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
-                                                isProgressDraging = false
-                                            }
-                                    )
-                                    .frame(height: 20)
+                                Slider(value: $progressDragingNewTime, in: 0...currentItemTotalTime) { isEditing in
+                                    isProgressDraging = isEditing
+                                    if !isEditing {
+                                        globalAudioPlayer.seek(to: .init(seconds: progressDragingNewTime, preferredTimescale: 60000))
+                                        currentPlaybackTime = progressDragingNewTime
+                                        var nowPlayingInfo = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [String: Any]()
+                                        nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = currentPlaybackTime
+                                        MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
+                                    }
+                                }
+                                .sliderThumbVisibility(.hidden)
+                                .tint(.white)
                                 HStack {
                                     Text(formattedTime(from: currentPlaybackTime))
                                         .font(.system(size: 11, weight: .semibold))
@@ -255,23 +234,14 @@ struct NowPlayingView: View {
                             HStack {
                                 Image(systemName: "speaker.fill")
                                     .font(.system(size: 14))
-                                CustomProgressView(value: isVolumeDraging ? volumeDragingNewValue : Double(currentVolume))
-                                    .shadow(radius: isVolumeDraging ? 2 : 0)
-                                    .gesture(
-                                        DragGesture()
-                                            .onChanged { value in
-                                                isVolumeDraging = true
-                                                let newVolume = Double(currentVolume) + value.translation.width / 240
-                                                if newVolume >= 0 && newVolume <= 1 {
-                                                    volumeDragingNewValue = newVolume
-                                                }
-                                            }
-                                            .onEnded { _ in
-                                                updateSystemVolumeSubject.send(Float(volumeDragingNewValue))
-                                                isVolumeDraging = false
-                                            }
-                                    )
-                                    .frame(height: 6)
+                                Slider(value: $volumeDragingNewValue) { isEditing in
+                                    isVolumeDraging = isEditing
+                                    if !isEditing {
+                                        updateSystemVolumeSubject.send(Float(volumeDragingNewValue))
+                                    }
+                                }
+                                .sliderThumbVisibility(.hidden)
+                                .tint(.white)
                                 Image(systemName: "speaker.wave.3.fill")
                                     .font(.system(size: 14))
                             }
@@ -327,6 +297,9 @@ struct NowPlayingView: View {
             volumeObserver = AVAudioSession.sharedInstance().observe(\.outputVolume, options: .new) { _, observedValue in
                 if let newValue = observedValue.newValue {
                     currentVolume = newValue
+                    if !isVolumeDraging {
+                        volumeDragingNewValue = Double(newValue)
+                    }
                 }
             }
         }
@@ -353,6 +326,9 @@ struct NowPlayingView: View {
             // Code in this closure runs at nearly each frame, optimizing for speed is important.
             if time.seconds - currentPlaybackTime >= 0.3 || time.seconds < currentPlaybackTime {
                 currentPlaybackTime = time.seconds
+                if _fastPath(!isProgressDraging) {
+                    progressDragingNewTime = currentPlaybackTime
+                }
             }
         }
     }

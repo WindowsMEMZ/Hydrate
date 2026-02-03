@@ -38,6 +38,7 @@
 		8CD0E1D72DC33EEC00997186 /* Combine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD0E1D62DC33EEA00997186 /* Combine.swift */; };
 		8CD0E1DD2DC3B07400997186 /* UIRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD0E1DC2DC3B06900997186 /* UIRepresentable.swift */; };
 		8CD0E1E02DC45C3700997186 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD0E1DF2DC45C3400997186 /* AboutView.swift */; };
+		8CE4D67E2F31B11C004757C6 /* ColorThief.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE4D67D2F31B11C004757C6 /* ColorThief.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -69,6 +70,7 @@
 		8CD0E1DC2DC3B06900997186 /* UIRepresentable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIRepresentable.swift; sourceTree = "<group>"; };
 		8CD0E1DE2DC3DF5400997186 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		8CD0E1DF2DC45C3400997186 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
+		8CE4D67D2F31B11C004757C6 /* ColorThief.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorThief.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -155,6 +157,7 @@
 				8CD0E1DC2DC3B06900997186 /* UIRepresentable.swift */,
 				8CD0E1D22DC3285E00997186 /* StarButton.swift */,
 				8CD0E1C82DC26DA200997186 /* MarqueeText.swift */,
+				8CE4D67D2F31B11C004757C6 /* ColorThief.swift */,
 				8CD0E1D42DC33A2700997186 /* String+.swift */,
 				8CD0E1A12DC24ADA00997186 /* ClosedRange+.swift */,
 				8CD0E19F2DC245FF00997186 /* AVPlayer+PeriodicTimePublisher.swift */,
@@ -257,6 +260,7 @@
 				8CD0E1A72DC24F6000997186 /* LyricParsers.swift in Sources */,
 				8CD0E1952DC232A300997186 /* WorkDetailView.swift in Sources */,
 				8CD0E1D12DC325FD00997186 /* GlobalProperties.swift in Sources */,
+				8CE4D67E2F31B11C004757C6 /* ColorThief.swift in Sources */,
 				8CD0E1912DC2266400997186 /* HomeView.swift in Sources */,
 				8CD0E1CD2DC3220C00997186 /* LibraryView.swift in Sources */,
 				8C39621F2DC2225600372D10 /* ASMROneApp.swift in Sources */,
@@ -438,9 +442,12 @@
 				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.memz233.ASMROne;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator xros xrsimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1,2,7";
 			};
 			name = Debug;
 		};
@@ -471,9 +478,12 @@
 				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.memz233.ASMROne;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator xros xrsimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1,2,7";
 			};
 			name = Release;
 		};
