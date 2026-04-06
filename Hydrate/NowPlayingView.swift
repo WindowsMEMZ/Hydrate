@@ -33,6 +33,7 @@ struct NowPlayingView: View {
     @State var isScrollAnimationSet = false
     @State var lyricScrollProxy: ScrollViewProxy?
     @State var isVolumeDraging = false
+    @State var volumeView = MPVolumeView()
     @State var volumeDragingNewValue = Double(AVAudioSession.sharedInstance().outputVolume)
     @State var currentVolume = AVAudioSession.sharedInstance().outputVolume
     @State var volumeObserver: NSKeyValueObservation?
@@ -234,10 +235,16 @@ struct NowPlayingView: View {
                             HStack {
                                 Image(systemName: "speaker.fill")
                                     .font(.system(size: 14))
-                                Slider(value: $volumeDragingNewValue) { isEditing in
-                                    isVolumeDraging = isEditing
-                                    if !isEditing {
-                                        updateSystemVolumeSubject.send(Float(volumeDragingNewValue))
+                                ZStack {
+                                    GenericUIViewRepresentable(view: volumeView)
+                                        .offset(x: 1000, y: 1000)
+                                        .frame(width: 10, height: 10)
+                                    Slider(value: $volumeDragingNewValue) { isEditing in
+                                        isVolumeDraging = isEditing
+                                        if !isEditing {
+                                            let slider = volumeView.subviews.first(where: { $0 is UISlider }) as! UISlider
+                                            slider.value = Float(volumeDragingNewValue)
+                                        }
                                     }
                                 }
                                 .sliderThumbVisibility(.hidden)

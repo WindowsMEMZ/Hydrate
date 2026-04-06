@@ -9,4 +9,3 @@ import Combine
 import Foundation
 
 let performSearchSubject = PassthroughSubject<String, Never>()
-let updateSystemVolumeSubject = PassthroughSubject<Float, Never>()

@@ -26,15 +26,8 @@ struct ContentView: View {
     @State var isAccountManagementPresented = false
     @State var isNowPlayingStarred = false
     @State var isNowPlaying = false
-    @State var _volumeView = MPVolumeView()
     var body: some View {
         ZStack(alignment: .bottom) {
-            GenericUIViewRepresentable(view: _volumeView)
-                .offset(x: 1000, y: 1000)
-                .onReceive(updateSystemVolumeSubject) { value in
-                    let slider = _volumeView.subviews.first(where: { $0 is UISlider }) as! UISlider
-                    slider.value = value
-                }
             TabView(selection: $tabSelection) {
                 Tab(value: 1) {
                     NavigationStack {
@@ -250,12 +243,14 @@ struct ContentView: View {
         }
         .onReceive(globalAudioPlayer.publisher(for: \.currentItem)) { item in
             if let item {
-                var nowPlayingInfo = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [String: Any]()
-                nowPlayingInfo[MPMediaItemPropertyPlaybackDuration] = item.asset.duration.seconds
-                nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = 0.0
-                nowPlayingInfo[MPNowPlayingInfoPropertyPlaybackRate] = 1.0
-                nowPlayingInfo[MPNowPlayingInfoPropertyDefaultPlaybackRate] = 1.0
-                MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
+                Task {
+                    var nowPlayingInfo = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [String: Any]()
+                    nowPlayingInfo[MPMediaItemPropertyPlaybackDuration] = try? await item.asset.load(.duration).seconds
+                    nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = 0.0
+                    nowPlayingInfo[MPNowPlayingInfoPropertyPlaybackRate] = 1.0
+                    nowPlayingInfo[MPNowPlayingInfoPropertyDefaultPlaybackRate] = 1.0
+                    MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
+                }
             }
         }
     }
