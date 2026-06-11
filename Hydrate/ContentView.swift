@@ -105,13 +105,13 @@ struct ContentView: View {
             }
         }
         .bottomSheet(bottomSheetPosition: $nowPlayingSheetPosition, switchablePositions: [.hidden, .relativeTop(1)]) {
-            VStack {
+            VStack(spacing: 15) {
                 Capsule()
                     .fill(Color(UIColor.tertiaryLabel))
-                    .frame(width: 36, height: 5)
+                    .frame(width: 64, height: 4)
                     .centerAligned()
                     .allowsHitTesting(false)
-                HStack(spacing: 5) {
+                HStack(spacing: 10) {
                     if let nowPlayingWork = audioPlayer.media?.sourceWork {
                         WebImage(url: URL(string: nowPlayingWork.mainCoverUrl)) { image in
                             image.resizable()
@@ -121,9 +121,9 @@ struct ContentView: View {
                                 .redacted(reason: .placeholder)
                         }
                         .scaledToFill()
-                        .frame(width: 80, height: 80)
+                        .frame(width: 75, height: 75)
                         .clipped()
-                        .cornerRadius(6)
+                        .cornerRadius(12)
                         VStack(alignment: .leading, spacing: 3) {
                             MarqueeText(text: nowPlayingWork.title, font: .systemFont(ofSize: 14, weight: .semibold), leftFade: 4, rightFade: 4, startDelay: 4, alignment: .leading)
                             Menu(nowPlayingWork.vas.map { $0.name }.joined(separator: "/")) {
@@ -165,8 +165,8 @@ struct ContentView: View {
                 }
             }
             .padding()
-            .padding(.horizontal)
-            .padding(.top, 45)
+            .padding(.horizontal, 15)
+            .padding(.top, (sceneDelegate.windowScene?.keyWindow?.safeAreaInsets.top ?? 0) - 5)
             .environment(\.colorScheme, .dark)
         } mainContent: {
             NowPlayingView()
@@ -210,7 +210,7 @@ struct ContentView: View {
             )
             .blur(radius: 10, opaque: true)
             .overlay {
-                Color.black.opacity(0.6)
+                Color.black.opacity(0.5)
             }
             .clipShape(
                 RoundedRectangle(

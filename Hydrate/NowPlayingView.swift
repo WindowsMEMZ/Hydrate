@@ -59,7 +59,7 @@ struct NowPlayingView: View {
                         )
                         .blur(radius: 10, opaque: true)
                         .overlay {
-                            Color.black.opacity(0.6)
+                            Color.black.opacity(0.5)
                         }
                         .mask {
                             LinearGradient(
@@ -409,6 +409,9 @@ private struct LyricsView: View {
                                     .frame(height: 34)
                             }
                         }
+                        Rectangle()
+                            .fill(Color.clear)
+                            .frame(height: 450)
                     }
                     .allowsHitTesting(showingFullContent)
                 }
