@@ -396,6 +396,7 @@ private struct LyricsView: View {
                                         pressedIndex = nil
                                     }
                                 } perform: {
+                                    currentIndex = index
                                     showingFullContent = false
                                     audioPlayer.seek(to: lyricKeys[index].lowerBound)
                                     audioPlayer.play()
@@ -490,20 +491,24 @@ private struct LyricsView: View {
                     }
                 }
                 .onChange(of: currentIndex) { oldValue, newValue in
-                    updateScrollOffset(fromIndex: oldValue, toIndex: newValue)
+                    updateScrollOffset()
                 }
                 .onChange(of: isShowingWaitingProgress) {
                     updateScrollOffset()
+                }
+                .onChange(of: showingFullContent) {
+                    if !showingFullContent {
+                        updateScrollOffset()
+                    }
                 }
             }
             .allowsHitTesting(false)
         }
     }
     
-    private func updateScrollOffset(
-        fromIndex oldIndex: Int? = nil,
-        toIndex newIndex: Int? = nil
-    ) {
+    private func updateScrollOffset() {
+        guard !showingFullContent else { return }
+        
         var heightBeforeCurrent: CGFloat = 0
         if currentIndex > 0 {
             heightBeforeCurrent = lineHeights[0..<currentIndex].reduce(into: 0) {
@@ -513,24 +518,7 @@ private struct LyricsView: View {
         heightBeforeCurrent += isShowingWaitingProgress ? 60 : 0
         self.heightBeforeCurrent = heightBeforeCurrent
         
-        var userScrollDelta: CGFloat = 0
-        if showingFullContent, let oldIndex, let newIndex, oldIndex != newIndex {
-            let left: Int
-            let right: Int
-            if oldIndex < newIndex {
-                (left, right) = (oldIndex, newIndex)
-            } else {
-                (left, right) = (newIndex, oldIndex)
-            }
-            userScrollDelta = lineHeights[left..<right].reduce(into: 0) {
-                $0 += $1 + _lyricLineSpacing
-            }
-            if oldIndex > newIndex {
-                userScrollDelta = -userScrollDelta
-            }
-        }
-        
-        underlyingScrollView?.contentOffset.y = heightBeforeCurrent - pageOffset + userScrollDelta
+        underlyingScrollView?.contentOffset.y = heightBeforeCurrent - pageOffset
     }
     
     private struct LineView: View {
@@ -588,6 +576,11 @@ private struct LyricsView: View {
             .onChange(of: isShowingWaitingProgress) {
                 updateOffset(indexBecomingCurrent: currentIndex)
             }
+            .onChange(of: showingFullContent) {
+                if !showingFullContent {
+                    updateOffset(indexBecomingCurrent: currentIndex)
+                }
+            }
         }
         
         var isCurrent: Bool {
@@ -595,7 +588,7 @@ private struct LyricsView: View {
         }
         var isVisible: Bool {
             -pageOffset < offset + lineHeights[index] * 2
-            && -pageOffset + pageHeight > offset
+            && -pageOffset + pageHeight > offset - lineHeights[index]
         }
         
         private func updateOffset(indexBecomingCurrent: Int? = nil) {
@@ -630,22 +623,28 @@ private struct LyricsView: View {
                     && isVisible {
                     canResetShowingFullContent = false
                     showingFullContent = false
-                    
+                    return // Actual update in next call, by onChange(of: showingFullContent)
                 }
                 if !showingFullContent {
                     withAnimation(.easeOut) {
                         updatePageOffset(0)
                     }
                     
-                    DispatchQueue.main.asyncAfter(
-                        deadline: .now() + 0.1 * max(Double(index - indexBecomingCurrent), 0)
-                    ) {
-                        withAnimation(.spring) {
-                            _update()
+                    if isVisible {
+                        DispatchQueue.main.asyncAfter(
+                            deadline: .now() + 0.1 * max(Double(index - indexBecomingCurrent), 0)
+                        ) {
+                            withAnimation(.spring) {
+                                _update()
+                            }
                         }
+                    } else {
+                        _update()
                     }
                 } else {
-                    _update()
+                    // We don't update offset, as well as underlyingScrollView's
+                    // contentOffset, while user is scrolling
+                    // (showingFullContent is true).
                 }
             } else {
                 _update()

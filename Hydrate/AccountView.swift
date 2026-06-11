@@ -12,9 +12,10 @@ import Alamofire
 import DarockFoundation
 
 struct AccountView: View {
-    @Environment(\.dismiss) var dismiss
-    @AppStorage("AccountToken") var accountToken = ""
-    @AppStorage("CachedUserName") var cachedUserName = ""
+    @Environment(\.dismiss) private var dismiss
+    @AppStorage("AccountToken") private var accountToken = ""
+    @AppStorage("CachedUserName") private var cachedUserName = ""
+    @AppStorage("RecentWorkPreservingCount") private var recentWorkPreservingCount = 10
     var body: some View {
         NavigationStack {
             List {
@@ -38,6 +39,16 @@ struct AccountView: View {
                     NavigationLink(destination: { RegisterView() }, label: {
                         Label("注册", systemImage: "person.badge.plus")
                     })
+                }
+                Section {
+                    Picker("保留最近浏览", selection: $recentWorkPreservingCount) {
+                        Text("10 条").tag(10)
+                        Text("20 条").tag(20)
+                        Text("50 条").tag(50)
+                        Text("100 条").tag(100)
+                    }
+                } header: {
+                    Text("资料库")
                 }
                 Section {
                     NavigationLink(destination: { AboutView() }, label: {

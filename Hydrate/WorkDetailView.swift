@@ -15,25 +15,26 @@ import SDWebImageSwiftUI
 
 struct WorkDetailView: View {
     var id: Int
-    @Namespace var authorMoreWorkNavigationNamespace
-    @Namespace var ralatedWorkNavigationNamespace
-    @AppStorage("AccountToken") var accountToken = ""
-    @State var work: Work?
-    @State var tracks: [TrackStructure]?
-    @State var trackListHeightObservation: NSKeyValueObservation?
-    @State var trackListHeight: CGFloat = 1
-    @State var textFileURLPresentation: String?
-    @State var textFilePresentationContent: String?
-    @State var imageFileURLPresentation: String?
-    @State var workTitleHeight: CGFloat = 0
-    @State var scrollObservation: NSKeyValueObservation?
-    @State var isShowingNavigationTitle = false
-    @State var moreWorksByAuthor = [(String, [Work])]()
-    @State var relatedWorks = [Work]()
-    @State var isDownloaded = false
-    @State var downloadProgress: Double?
-    @State var individualDownloadProgresses: [TrackStructure: Double]?
-    @State var downloadProgressUpdateTimer: Timer?
+    @Namespace private var authorMoreWorkNavigationNamespace
+    @Namespace private var ralatedWorkNavigationNamespace
+    @AppStorage("AccountToken") private var accountToken = ""
+    @AppStorage("RecentWorkPreservingCount") private var recentWorkPreservingCount = 10
+    @State private var work: Work?
+    @State private var tracks: [TrackStructure]?
+    @State private var trackListHeightObservation: NSKeyValueObservation?
+    @State private var trackListHeight: CGFloat = 1
+    @State private var textFileURLPresentation: String?
+    @State private var textFilePresentationContent: String?
+    @State private var imageFileURLPresentation: String?
+    @State private var workTitleHeight: CGFloat = 0
+    @State private var scrollObservation: NSKeyValueObservation?
+    @State private var isShowingNavigationTitle = false
+    @State private var moreWorksByAuthor = [(String, [Work])]()
+    @State private var relatedWorks = [Work]()
+    @State private var isDownloaded = false
+    @State private var downloadProgress: Double?
+    @State private var individualDownloadProgresses: [TrackStructure: Double]?
+    @State private var downloadProgressUpdateTimer: Timer?
     var body: some View {
         ScrollView {
             if let work {
@@ -586,8 +587,8 @@ struct WorkDetailView: View {
                 }
                 if !recentWorks.contains(work) {
                     recentWorks.insert(work, at: 0)
-                    if recentWorks.count > 10 {
-                        recentWorks.removeLast()
+                    if recentWorks.count > recentWorkPreservingCount {
+                        recentWorks.removeLast(recentWorks.count - recentWorkPreservingCount)
                     }
                 } else {
                     recentWorks.move(fromOffsets: [recentWorks.firstIndex(of: work)!], toOffset: 0)
