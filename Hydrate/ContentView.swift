@@ -9,7 +9,6 @@ import SwiftUI
 import DarockUI
 import Alamofire
 import BottomSheet
-import MediaPlayer
 import AVFoundation
 import DarockFoundation
 import SDWebImageSwiftUI
@@ -17,15 +16,12 @@ import SDWebImageSwiftUI
 
 struct ContentView: View {
     @FocusState var isSearchKeyboardFocused: Bool
-    @Environment(\.colorScheme) var colorScheme
-    @AppStorage("AccountToken") var accountToken = ""
-    @AppStorage("MainTabSelection") var tabSelection = 1
-    @State var nowPlayingSheetPosition = BottomSheetPosition.hidden
-    @State var nowPlayingWork: Work?
-    @State var nowPlayingBackgroundColors = Array(repeating: Color(uiColor: .darkGray), count: 16)
-    @State var isAccountManagementPresented = false
-    @State var isNowPlayingStarred = false
-    @State var isNowPlaying = false
+    @Environment(\.colorScheme) private var colorScheme
+    @AppStorage("AccountToken") private var accountToken = ""
+    @AppStorage("MainTabSelection") private var tabSelection = 1
+    @State private var audioPlayer = AudioPlayer.shared
+    @State private var nowPlayingSheetPosition = BottomSheetPosition.hidden
+    @State private var isAccountManagementPresented = false
     var body: some View {
         ZStack(alignment: .bottom) {
             TabView(selection: $tabSelection) {
@@ -115,7 +111,7 @@ struct ContentView: View {
                     .centerAligned()
                     .allowsHitTesting(false)
                 HStack(spacing: 5) {
-                    if let nowPlayingWork {
+                    if let nowPlayingWork = audioPlayer.media?.sourceWork {
                         WebImage(url: URL(string: nowPlayingWork.mainCoverUrl)) { image in
                             image.resizable()
                         } placeholder: {
@@ -143,13 +139,13 @@ struct ContentView: View {
                             .opacity(0.6)
                         }
                         if !accountToken.isEmpty {
-                            StarButton(isStarred: $isNowPlayingStarred) {
-                                if !isNowPlayingStarred {
+                            StarButton(isStarred: $audioPlayer.isStarred) {
+                                if !audioPlayer.isStarred {
                                     requestJSON("https://api.asmr.one/api/review", method: .put, parameters: ["work_id": nowPlayingWork.id, "rating": 5, "review_text": nil, "progress": nil], encoding: JSONEncoding.default, headers: globalRequestHeaders) { _, _ in }
                                 } else {
                                     requestJSON("https://api.asmr.one/api/review?work_id=\(nowPlayingWork.id)", method: .delete, headers: globalRequestHeaders) { _, _ in }
                                 }
-                                isNowPlayingStarred.toggle()
+                                audioPlayer.isStarred.toggle()
                             }
                         }
                         Menu {
@@ -174,7 +170,23 @@ struct ContentView: View {
         } mainContent: {
             NowPlayingView()
                 .mask {
-                    LinearGradient(colors: [.black.opacity(0), .black, .black, .black, .black, .black, .black, .black], startPoint: .top, endPoint: .bottom)
+                    LinearGradient(
+                        colors: [
+                            .black.opacity(0),
+                            .black,
+                            .black,
+                            .black,
+                            .black,
+                            .black,
+                            .black,
+                            .black,
+                            .black,
+                            .black,
+                            .black
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
                 }
         }
         .showDragIndicator(false)
@@ -191,7 +203,7 @@ struct ContentView: View {
                     SIMD2<Float>(0.0, 0.5), SIMD2<Float>(0.45, 0.55), SIMD2<Float>(1.0, 0.5),
                     SIMD2<Float>(0.0, 1.0), SIMD2<Float>(0.5, 1.0), SIMD2<Float>(1.0, 1.0)
                 ],
-                colors: nowPlayingBackgroundColors,
+                colors: audioPlayer.artworkBackgroundColors,
                 background: .init(uiColor: .darkGray),
                 smoothsColors: true
             )
@@ -199,65 +211,21 @@ struct ContentView: View {
             .overlay {
                 Color.black.opacity(0.6)
             }
-            .clipShape(RoundedRectangle(cornerRadius: true ? (UIScreen.main.value(forKey: "_displayCornerRadius") as! Double) : 0))
+            .clipShape(
+                RoundedRectangle(
+                    cornerRadius: true ? (UIScreen.main.value(forKey: "_displayCornerRadius") as! Double) : 0
+                )
+            )
             .padding(-2)
         }
         .customThreshold(0.1)
         .ignoresSafeArea(edges: .top)
         .sheet(isPresented: $isAccountManagementPresented, content: { AccountView() })
-        .onReceive(nowPlayingMedia) { media in
-            if let media {
-                globalAudioPlayer.replaceCurrentItem(with: AVPlayerItem(url: URL(string: media.playURL)!))
-                if !media.preventAutoPlaying {
-                    try? AVAudioSession.sharedInstance().setActive(true)
-                    globalAudioPlayer.play()
-                }
-                nowPlayingWork = media.sourceWork
-                isNowPlayingStarred = media.sourceWork.userRating != nil
-                DispatchQueue(label: "com.memz233.Hydrate.UpdateNowPlayingInfo", qos: .utility).async {
-                    var nowPlayingInfo = [String: Any]()
-                    if let imageUrl = URL(string: media.sourceWork.mainCoverUrl),
-                       let imageData = try? Data(contentsOf: imageUrl),
-                       let image = UIImage(data: imageData) {
-                        nowPlayingBackgroundColors = ColorThief.getPalette(from: image, colorCount: 16)!.map {
-                            Color(red: Double($0.r) / 255, green: Double($0.g) / 255, blue: Double($0.b) / 255)
-                        }
-                        nowPlayingInfo[MPMediaItemPropertyArtwork] = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
-                    }
-                    nowPlayingInfo[MPMediaItemPropertyTitle] = media.playFileName
-                    nowPlayingInfo[MPMediaItemPropertyArtist] = media.sourceWork.vas.map { $0.name }.joined(separator: "/")
-                    nowPlayingInfo[MPMediaItemPropertyAlbumTitle] = media.sourceWork.title
-                    MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
-                }
-                if let jsonData = jsonString(from: media) {
-                    try? jsonData.write(toFile: NSHomeDirectory() + "/Documents/LatestNowPlaying.json", atomically: true, encoding: .utf8)
-                }
-            }
-        }
-        .onReceive(globalAudioPlayer.publisher(for: \.timeControlStatus)) { status in
-            isNowPlaying = status == .playing
-            if var nowPlayingInfo = MPNowPlayingInfoCenter.default().nowPlayingInfo {
-                nowPlayingInfo[MPNowPlayingInfoPropertyPlaybackRate] = isNowPlaying ? 1.0 : 0.0
-                MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
-            }
-        }
-        .onReceive(globalAudioPlayer.publisher(for: \.currentItem)) { item in
-            if let item {
-                Task {
-                    var nowPlayingInfo = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [String: Any]()
-                    nowPlayingInfo[MPMediaItemPropertyPlaybackDuration] = try? await item.asset.load(.duration).seconds
-                    nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = 0.0
-                    nowPlayingInfo[MPNowPlayingInfoPropertyPlaybackRate] = 1.0
-                    nowPlayingInfo[MPNowPlayingInfoPropertyDefaultPlaybackRate] = 1.0
-                    MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
-                }
-            }
-        }
     }
     
     var nowPlayingView: some View {
         HStack {
-            if let nowPlayingWork {
+            if let nowPlayingWork = audioPlayer.media?.sourceWork {
                 WebImage(url: URL(string: nowPlayingWork.samCoverUrl)) { image in
                     image.resizable()
                 } placeholder: {
@@ -274,13 +242,13 @@ struct ContentView: View {
                     .lineLimit(1)
                 Spacer()
                 Button(action: {
-                    if isNowPlaying {
-                        globalAudioPlayer.pause()
+                    if audioPlayer.isPlaying {
+                        audioPlayer.pause()
                     } else {
-                        globalAudioPlayer.play()
+                        audioPlayer.play()
                     }
                 }, label: {
-                    Image(systemName: isNowPlaying ? "pause.fill" : "play.fill")
+                    Image(systemName: audioPlayer.isPlaying ? "pause.fill" : "play.fill")
                         .font(.system(size: 20))
                 })
                 .buttonStyle(ControlButtonStyle())

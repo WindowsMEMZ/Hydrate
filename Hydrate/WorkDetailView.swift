@@ -124,7 +124,13 @@ struct WorkDetailView: View {
                                                 break
                                             }
                                         }
-                                        nowPlayingMedia.send(.init(sourceWork: work, sourceTracks: tracks, playURL: track.mediaStreamUrl!, playFileName: String(track.title.dropLast(4)), lyrics: lyrics))
+                                        AudioPlayer.shared.media = .init(
+                                            sourceWork: work,
+                                            sourceTracks: tracks,
+                                            playURL: track.mediaStreamUrl!,
+                                            playFileName: String(track.title.dropLast(4)),
+                                            lyrics: lyrics
+                                        )
                                     }
                                 }, label: {
                                     HStack {

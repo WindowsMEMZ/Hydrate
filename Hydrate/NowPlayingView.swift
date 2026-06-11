@@ -14,274 +14,178 @@ import AVFoundation
 import DarockFoundation
 @_spi(Advanced) import SwiftUIIntrospect
 
-let globalAudioPlayer = AVPlayer()
-var nowPlayingMedia = CurrentValueSubject<NowPlayingInfo?, Never>(nil)
-
 struct NowPlayingView: View {
-    @Namespace var coverScaleNamespace
-    @State var nowPlaying: NowPlayingInfo?
-    @State var currentPlaybackTime = globalAudioPlayer.currentTime().seconds
-    @State var currentItemTotalTime = 0.0
-    @State var currentScrolledId = 0.0
-    @State var isShowingControls = false
-    @State var isPlaying = false
-    @State var isProgressDraging = false
-    @State var progressDragingNewTime = 0.0
-    @State var controlMenuDismissTimer: Timer?
-    @State var isUserScrolling = false
-    @State var canResetUserScrolling = false
-    @State var isScrollAnimationSet = false
-    @State var lyricScrollProxy: ScrollViewProxy?
-    @State var isVolumeDraging = false
-    @State var volumeView = MPVolumeView()
-    @State var volumeDragingNewValue = Double(AVAudioSession.sharedInstance().outputVolume)
-    @State var currentVolume = AVAudioSession.sharedInstance().outputVolume
-    @State var volumeObserver: NSKeyValueObservation?
+    @Namespace private var coverScaleNamespace
+    @State private var audioPlayer = AudioPlayer.shared
+    @State private var currentPlaybackTime = 0.0
+    @State private var currentScrolledId = 0.0
+    @State private var visibleLyricIDs: Set<Double> = []
+    @State private var isShowingControls = false
+    @State private var isProgressDraging = false
+    @State private var progressDragingNewTime = 0.0
+    @State private var controlMenuDismissTimer: Timer?
+    @State private var isUserScrolling = false
+    @State private var canResetUserScrolling = false
+    @State private var isScrollAnimationSet = false
+    @State private var lyricScrollProxy: ScrollViewProxy?
+    @State private var isVolumeDraging = false
+    @State private var volumeView = MPVolumeView()
+    @State private var volumeDragingNewValue = Double(AVAudioSession.sharedInstance().outputVolume)
+    @State private var currentVolume = AVAudioSession.sharedInstance().outputVolume
+    @State private var volumeObserver: NSKeyValueObservation?
     var body: some View {
         VStack {
-            if let nowPlaying {
+            if let media = audioPlayer.media {
                 ZStack {
-                    if let lyrics = nowPlaying.lyrics, !lyrics.isEmpty {
-                        ScrollViewReader { scrollProxy in
-                            let lyricKeys = Array<ClosedRange<Double>>(lyrics.keys).sorted(by: { lhs, rhs in lhs.lowerBound < rhs.lowerBound })
-                            let lyricKeyAllBounds = lyricKeys.allBounds
-                            ScrollView {
-                                VStack(alignment: .leading, spacing: 20) {
-                                    Spacer()
-                                        .frame(height: 20)
-                                    if let firstKey = lyricKeys.first {
-                                        if firstKey.lowerBound >= 2.0 {
-                                            WaitingDotsView(startTime: 0.0, endTime: firstKey.lowerBound, currentTime: $currentPlaybackTime)
-                                        }
-                                    }
-                                    ForEach(0..<lyricKeys.count, id: \.self) { i in
-                                        HStack {
-                                            Text(lyrics[lyricKeys[i]]!)
-                                                .font(.system(size: 30, weight: .bold))
-                                                .fixedSize(horizontal: false, vertical: true)
-                                            Spacer()
-                                        }
-                                        .opacity(currentScrolledId == lyricKeys[i].lowerBound ? 1.0 : 0.6)
-                                        .blur(radius: currentScrolledId == lyricKeys[i].lowerBound || isUserScrolling ? 0 : abs(Double((lyricKeys.firstIndex { $0.lowerBound == currentScrolledId || $0.upperBound == currentScrolledId } ?? 0) - i)) * 3)
-                                        .padding(.vertical, 5)
-                                        .animation(.smooth, value: currentScrolledId)
-                                        .modifier(LyricButtonModifier {
-                                            globalAudioPlayer.seek(to: CMTime(seconds: lyricKeys[i].lowerBound, preferredTimescale: 60000),
-                                                                   toleranceBefore: .zero,
-                                                                   toleranceAfter: .zero)
-                                            globalAudioPlayer.play()
-                                            currentScrolledId = lyricKeys[i].lowerBound
-                                            withAnimation {
-                                                lyricScrollProxy?.scrollTo(lyricKeys[i].lowerBound, anchor: .init(x: 0.5, y: 0.13))
-                                            }
-                                        })
-                                        .allowsHitTesting(isUserScrolling)
-                                        .id(lyricKeys[i].lowerBound)
-                                        if i < lyricKeys.count - 1 && lyricKeys[i &+ 1].lowerBound - lyricKeys[i].upperBound >= 5 {
-                                            HStack {
-                                                WaitingProgressView(startTime: lyricKeys[i].upperBound, endTime: lyricKeys[i &+ 1].lowerBound, currentTime: $currentPlaybackTime)
-                                                Spacer()
-                                            }
-                                            .id(lyricKeys[i].upperBound)
-                                        }
-                                    }
-                                    .scrollTransition { content, phase in
-                                        content
-                                            .scaleEffect(phase.isIdentity ? 1 : 0.98)
-                                            .opacity(phase.isIdentity ? 1 : 0.5)
-                                            .offset(y: phase == .bottomTrailing ? 10 : 0)
-                                    }
-                                    Spacer()
-                                        .frame(height: 200)
-                                }
-                                .padding(.horizontal, 30)
-                                .padding(.vertical)
-                            }
-                            .introspect(.scrollView, on: .iOS(.v18...)) { scrollView in
-                                guard !isScrollAnimationSet else { return }
-                                let animation = CASpringAnimation()
-                                animation.mass = 1
-                                animation.stiffness = 650
-                                animation.damping = 300
-                                animation.initialVelocity = 0
-                                animation.duration = animation.settlingDuration
-                                scrollView.setValue(animation, forKeyPath: "_animation._customAnimation")
-                                scrollView.setValue(animation.settlingDuration, forKey: "_contentOffsetAnimationDuration")
-                                isScrollAnimationSet = true
-                            }
-                            .onScrollPhaseChange { oldPhase, newPhase in
-                                if newPhase == .interacting || newPhase == .decelerating {
-                                    isUserScrolling = true
-                                } else {
-                                    canResetUserScrolling = true
-                                }
-                            }
-                            .onAppear {
-                                lyricScrollProxy = scrollProxy
-                            }
-                            .onReceive(globalAudioPlayer.periodicTimePublisher()) { _ in
-                                var newScrollId = 0.0
-                                var isUpdatedScrollId = false
-                                for i in 0..<lyricKeyAllBounds.count where currentPlaybackTime < lyricKeyAllBounds[i] {
-                                    if let newKey = lyricKeyAllBounds[from: i - 1] {
-                                        newScrollId = newKey
-                                    } else {
-                                        newScrollId = lyricKeyAllBounds[i]
-                                    }
-                                    isUpdatedScrollId = true
-                                    break
-                                }
-                                if _slowPath(!isUpdatedScrollId && !lyricKeys.isEmpty) {
-                                    newScrollId = lyricKeys.last!.lowerBound
-                                }
-                                if _slowPath(newScrollId != currentScrolledId) {
-                                    if canResetUserScrolling {
-                                        canResetUserScrolling = false
-                                        isUserScrolling = false
-                                    }
-                                    if !isUserScrolling {
-                                        currentScrolledId = newScrollId
-                                        withAnimation {
-                                            scrollProxy.scrollTo(newScrollId, anchor: .init(x: 0.5, y: 0.13))
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                    if let lyrics = media.lyrics, !lyrics.isEmpty {
+                        LyricsView(lyrics: lyrics, currentTime: currentPlaybackTime)
                     } else {
                         Text("文本不可用")
                     }
                     // Audio Controls
-                    VStack {
-                        Spacer()
+                    Group {
+                        MeshGradient(
+                            width: 3,
+                            height: 3,
+                            points: [
+                                SIMD2<Float>(0.0, 0.0), SIMD2<Float>(0.5, 0.0), SIMD2<Float>(1.0, 0.0),
+                                SIMD2<Float>(0.0, 0.5), SIMD2<Float>(0.45, 0.55), SIMD2<Float>(1.0, 0.5),
+                                SIMD2<Float>(0.0, 1.0), SIMD2<Float>(0.5, 1.0), SIMD2<Float>(1.0, 1.0)
+                            ],
+                            colors: audioPlayer.artworkBackgroundColors,
+                            background: .init(uiColor: .darkGray),
+                            smoothsColors: true
+                        )
+                        .blur(radius: 10, opaque: true)
+                        .overlay {
+                            Color.black.opacity(0.6)
+                        }
+                        .mask {
+                            LinearGradient(
+                                colors: [
+                                    .black.opacity(0),
+                                    .black.opacity(0),
+                                    .black.opacity(0),
+                                    .black.opacity(0),
+                                    .black,
+                                    .black,
+                                    .black,
+                                    .black
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        }
+                        .allowsHitTesting(false)
                         VStack {
+                            Spacer()
                             VStack {
-                                Slider(value: $progressDragingNewTime, in: 0...currentItemTotalTime) { isEditing in
-                                    isProgressDraging = isEditing
-                                    if !isEditing {
-                                        globalAudioPlayer.seek(to: .init(seconds: progressDragingNewTime, preferredTimescale: 60000))
-                                        currentPlaybackTime = progressDragingNewTime
-                                        var nowPlayingInfo = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [String: Any]()
-                                        nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = currentPlaybackTime
-                                        MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
-                                    }
-                                }
-                                .sliderThumbVisibility(.hidden)
-                                .tint(.white)
-                                HStack {
-                                    Text(formattedTime(from: currentPlaybackTime))
-                                        .font(.system(size: 11, weight: .semibold))
-                                        .opacity(0.6)
-                                    Spacer()
-                                    Text(formattedTime(from: currentItemTotalTime))
-                                        .font(.system(size: 11, weight: .semibold))
-                                        .opacity(0.6)
-                                }
-                                .padding(.top, -14)
-                            }
-                            .scaleEffect(isProgressDraging ? 1.05 : 1)
-                            .padding(.horizontal, 30)
-                            .animation(.easeOut(duration: 0.2), value: isProgressDraging)
-                            HStack {
-                                Spacer()
-                                Button(action: {
-                                    globalAudioPlayer.seek(
-                                        to: CMTime(seconds: globalAudioPlayer.currentTime().seconds - 10, preferredTimescale: 60000),
-                                        toleranceBefore: .zero,
-                                        toleranceAfter: .zero)
-                                    var nowPlayingInfo = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [String: Any]()
-                                    nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = globalAudioPlayer.currentTime().seconds - 10
-                                    MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
-                                    resetMenuDismissTimer()
-                                }, label: {
-                                    Image(systemName: "10.arrow.trianglehead.counterclockwise")
-                                        .font(.system(size: 30))
-                                })
-                                .buttonStyle(ControlButtonStyle())
-                                .frame(width: 50, height: 50)
-                                Button(action: {
-                                    if isPlaying {
-                                        globalAudioPlayer.pause()
-                                    } else {
-                                        globalAudioPlayer.play()
-                                    }
-                                    resetMenuDismissTimer()
-                                }, label: {
-                                    Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                                        .font(.system(size: 50))
-                                })
-                                .buttonStyle(ControlButtonStyle())
-                                .frame(width: 75, height: 75)
-                                .padding(.horizontal, 40)
-                                Button(action: {
-                                    globalAudioPlayer.seek(
-                                        to: CMTime(seconds: globalAudioPlayer.currentTime().seconds + 10, preferredTimescale: 60000),
-                                        toleranceBefore: .zero,
-                                        toleranceAfter: .zero)
-                                    var nowPlayingInfo = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [String: Any]()
-                                    nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = globalAudioPlayer.currentTime().seconds + 10
-                                    MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
-                                    resetMenuDismissTimer()
-                                }, label: {
-                                    Image(systemName: "10.arrow.trianglehead.clockwise")
-                                        .font(.system(size: 30))
-                                })
-                                .buttonStyle(ControlButtonStyle())
-                                .frame(width: 50, height: 50)
-                                Spacer()
-                            }
-                            .padding(.horizontal, 5)
-                            .padding(.bottom, 30)
-                            HStack {
-                                Image(systemName: "speaker.fill")
-                                    .font(.system(size: 14))
-                                ZStack {
-                                    GenericUIViewRepresentable(view: volumeView)
-                                        .offset(x: 1000, y: 1000)
-                                        .frame(width: 10, height: 10)
-                                    Slider(value: $volumeDragingNewValue) { isEditing in
-                                        isVolumeDraging = isEditing
+                                VStack {
+                                    Slider(value: $progressDragingNewTime, in: 0...currentItemTotalTime) { isEditing in
+                                        isProgressDraging = isEditing
                                         if !isEditing {
-                                            let slider = volumeView.subviews.first(where: { $0 is UISlider }) as! UISlider
-                                            slider.value = Float(volumeDragingNewValue)
+                                            audioPlayer.seek(to: progressDragingNewTime)
+                                            currentPlaybackTime = progressDragingNewTime
                                         }
                                     }
+                                    .sliderThumbVisibility(.hidden)
+                                    .tint(.white)
+                                    HStack {
+                                        Text(formattedTime(from: currentPlaybackTime))
+                                            .font(.system(size: 11, weight: .semibold))
+                                            .opacity(0.6)
+                                        Spacer()
+                                        Text(formattedTime(from: currentItemTotalTime))
+                                            .font(.system(size: 11, weight: .semibold))
+                                            .opacity(0.6)
+                                    }
+                                    .padding(.top, -14)
                                 }
-                                .sliderThumbVisibility(.hidden)
-                                .tint(.white)
-                                Image(systemName: "speaker.wave.3.fill")
-                                    .font(.system(size: 14))
+                                .scaleEffect(isProgressDraging ? 1.05 : 1)
+                                .padding(.horizontal, 30)
+                                .animation(.easeOut(duration: 0.2), value: isProgressDraging)
+                                HStack {
+                                    Spacer()
+                                    Button(action: {
+                                        audioPlayer.seek(to: audioPlayer.currentTime - 10)
+                                        resetMenuDismissTimer()
+                                    }, label: {
+                                        Image(systemName: "10.arrow.trianglehead.counterclockwise")
+                                            .font(.system(size: 30))
+                                    })
+                                    .buttonStyle(ControlButtonStyle())
+                                    .frame(width: 50, height: 50)
+                                    Button(action: {
+                                        if audioPlayer.isPlaying {
+                                            audioPlayer.pause()
+                                        } else {
+                                            audioPlayer.play()
+                                        }
+                                        resetMenuDismissTimer()
+                                    }, label: {
+                                        Image(systemName: audioPlayer.isPlaying ? "pause.fill" : "play.fill")
+                                            .font(.system(size: 50))
+                                    })
+                                    .buttonStyle(ControlButtonStyle())
+                                    .frame(width: 75, height: 75)
+                                    .padding(.horizontal, 40)
+                                    Button(action: {
+                                        audioPlayer.seek(to: audioPlayer.currentTime + 10)
+                                        resetMenuDismissTimer()
+                                    }, label: {
+                                        Image(systemName: "10.arrow.trianglehead.clockwise")
+                                            .font(.system(size: 30))
+                                    })
+                                    .buttonStyle(ControlButtonStyle())
+                                    .frame(width: 50, height: 50)
+                                    Spacer()
+                                }
+                                .padding(.horizontal, 5)
+                                .padding(.bottom, 30)
+                                HStack {
+                                    Image(systemName: "speaker.fill")
+                                        .font(.system(size: 14))
+                                    ZStack {
+                                        GenericUIViewRepresentable(view: volumeView)
+                                            .offset(x: 1000, y: 1000)
+                                            .frame(width: 10, height: 10)
+                                        Slider(value: $volumeDragingNewValue) { isEditing in
+                                            isVolumeDraging = isEditing
+                                            if !isEditing {
+                                                let slider = volumeView.subviews.first(where: { $0 is UISlider }) as! UISlider
+                                                slider.value = Float(volumeDragingNewValue)
+                                            }
+                                        }
+                                    }
+                                    .sliderThumbVisibility(.hidden)
+                                    .tint(.white)
+                                    Image(systemName: "speaker.wave.3.fill")
+                                        .font(.system(size: 14))
+                                }
+                                .scaleEffect(isVolumeDraging ? 1.05 : 1)
+                                .padding(.horizontal, 40)
+                                .animation(.easeOut(duration: 0.2), value: isVolumeDraging)
+                                HStack {
+                                    Spacer()
+                                    GenericUIViewRepresentable(view: {
+                                        let view = AVRoutePickerView()
+                                        view.tintColor = UIColor(white: 1, alpha: 0.6)
+                                        view.activeTintColor = UIColor(white: 1, alpha: 0.6)
+                                        return view
+                                    }())
+                                    .frame(width: 50, height: 50)
+                                    Spacer()
+                                }
                             }
-                            .scaleEffect(isVolumeDraging ? 1.05 : 1)
-                            .padding(.horizontal, 40)
-                            .animation(.easeOut(duration: 0.2), value: isVolumeDraging)
-                            HStack {
-                                Spacer()
-                                GenericUIViewRepresentable(view: {
-                                    let view = AVRoutePickerView()
-                                    view.tintColor = UIColor(white: 1, alpha: 0.6)
-                                    view.activeTintColor = UIColor(white: 1, alpha: 0.6)
-                                    return view
-                                }())
-                                .frame(width: 50, height: 50)
-                                Spacer()
-                            }
+                            .padding(.bottom, 40)
                         }
-                        .padding(.bottom, 40)
-                        .background {
-                            Color(UIColor.darkGray)
-                                .opacity(0.8)
-                                .frame(width: UIScreen.main.bounds.width + 100, height: 400)
-                                .blur(radius: 10)
-                                .offset(y: 20)
-                        }
-                        .opacity(isShowingControls || nowPlaying.lyrics == nil ? 1.0 : 0.0)
-                        .offset(y: isShowingControls || nowPlaying.lyrics == nil ? 0 : 10)
-                        .animation(.easeOut(duration: 0.2), value: isShowingControls)
                     }
+                    .opacity(isShowingControls || media.lyrics == nil ? 1.0 : 0.0)
+                    .offset(y: isShowingControls || media.lyrics == nil ? 0 : 10)
+                    .animation(.easeOut(duration: 0.2), value: isShowingControls)
                     .ignoresSafeArea()
                 }
-                .navigationTitle(nowPlaying.sourceWork.title)
+                .navigationTitle(media.sourceWork.title)
                 .onTapGesture { location in
                     if location.y > UIScreen.main.bounds.height / 2 {
                         isShowingControls = true
@@ -295,9 +199,6 @@ struct NowPlayingView: View {
             }
         }
         .onAppear {
-            nowPlaying = nowPlayingMedia.value
-            isPlaying = globalAudioPlayer.timeControlStatus == .playing
-            currentItemTotalTime = globalAudioPlayer.currentItem?.duration.seconds ?? 0.0
             isShowingControls = true
             resetMenuDismissTimer()
             UIApplication.shared.isIdleTimerDisabled = true
@@ -314,22 +215,7 @@ struct NowPlayingView: View {
             UIApplication.shared.isIdleTimerDisabled = false
         }
         .environment(\.colorScheme, .dark)
-        .onReceive(nowPlayingMedia) { value in
-            nowPlaying = value
-        }
-        .onReceive(globalAudioPlayer.publisher(for: \.timeControlStatus)) { status in
-            isPlaying = status == .playing
-            if status != .waitingToPlayAtSpecifiedRate {
-                currentItemTotalTime = globalAudioPlayer.currentItem?.duration.seconds ?? 0.0
-                debugPrint(currentItemTotalTime)
-            }
-        }
-        .onReceive(globalAudioPlayer.publisher(for: \.currentItem)) { item in
-            if let item {
-                currentItemTotalTime = item.duration.seconds
-            }
-        }
-        .onReceive(globalAudioPlayer.periodicTimePublisher()) { time in
+        .onReceive(audioPlayer._player.periodicTimePublisher()) { time in
             // Code in this closure runs at nearly each frame, optimizing for speed is important.
             if time.seconds - currentPlaybackTime >= 0.3 || time.seconds < currentPlaybackTime {
                 currentPlaybackTime = time.seconds
@@ -338,6 +224,10 @@ struct NowPlayingView: View {
                 }
             }
         }
+    }
+    
+    var currentItemTotalTime: TimeInterval {
+        audioPlayer.audioDuration ?? 0
     }
     
     struct WaitingDotsView: View {
@@ -454,69 +344,6 @@ struct NowPlayingView: View {
             }
         }
     }
-    struct WaitingProgressView: View {
-        var startTime: Double
-        var endTime: Double
-        @Binding var currentTime: Double
-        @State var isVisible = false
-        @State var verticalPadding: CGFloat = -15
-        var body: some View {
-            VStack {
-                CustomProgressView(value: (currentTime - startTime) / (endTime - startTime))
-                    .frame(height: 15)
-                HStack {
-                    Text(formattedTime(from: currentTime - startTime))
-                        .font(.system(size: 11))
-                        .opacity(0.6)
-                    Spacer()
-                    Text(formattedTime(from: endTime - startTime))
-                        .font(.system(size: 11))
-                        .opacity(0.6)
-                }
-            }
-            .padding(.vertical, verticalPadding)
-            .opacity(isVisible ? 1 : 0)
-            .blur(radius: isVisible ? 0 : 5)
-            .scaleEffect(isVisible ? 1 : 0.6)
-            .animation(.spring(response: 0.6, dampingFraction: 0.7, blendDuration: 0.3), value: isVisible)
-            .onChange(of: currentTime) {
-                isVisible = currentTime >= startTime + 0.2 && currentTime <= endTime
-            }
-            .onChange(of: isVisible) {
-                if isVisible {
-                    withAnimation(.easeOut(duration: 0.3)) {
-                        verticalPadding = 0
-                    }
-                } else {
-                    withAnimation(.easeOut) {
-                        verticalPadding = -15
-                    }
-                }
-            }
-        }
-    }
-    struct LyricButtonModifier: ViewModifier {
-        var buttonAction: () -> Void
-        @State private var isPressed = false
-        func body(content: Content) -> some View {
-            ZStack {
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(Color.gray)
-                    .scaleEffect(isPressed ? 0.9 : 1)
-                    .opacity(isPressed ? 0.4 : 0)
-                content
-                    .scaleEffect(isPressed ? 0.9 : 1)
-            }
-            .contentShape(RoundedRectangle(cornerRadius: 10))
-            ._onButtonGesture(pressing: { isPressing in
-                isPressed = isPressing
-            }, perform: buttonAction)
-            .onLongPressGesture(minimumDuration: 1.0) {
-                
-            }
-            .animation(.easeOut(duration: 0.2), value: isPressed)
-        }
-    }
     
     func resetMenuDismissTimer() {
         controlMenuDismissTimer?.invalidate()
@@ -525,6 +352,319 @@ struct NowPlayingView: View {
                 isShowingControls = false
             } else {
                 resetMenuDismissTimer()
+            }
+        }
+    }
+}
+
+private let _lyricLineSpacing: CGFloat = 26
+private let _lyricTopPadding: CGFloat = 80
+private struct LyricsView: View {
+    var lyrics: [ClosedRange<Double>: String]
+    var currentTime: Double
+    @State private var audioPlayer = AudioPlayer.shared
+    @State private var currentIndex = 0
+    @State private var lineHeights: [CGFloat] = []
+    @State private var pageOffset: CGFloat = 0
+    @State private var underlyingScrollView: UIScrollView?
+    @State private var heightBeforeCurrent: CGFloat = 0
+    @State private var showingFullContent = false
+    @State private var canResetShowingFullContent = false
+    @State private var isShowingWaitingProgress = false
+    @State private var pressedIndex: Int?
+    var body: some View {
+        ZStack(alignment: .top) {
+            let lyricKeys = Array<ClosedRange<Double>>(lyrics.keys)
+                .sorted(by: { lhs, rhs in lhs.lowerBound < rhs.lowerBound })
+            
+            ScrollView {
+                if !lyricKeys.isEmpty, lineHeights.count >= lyrics.count {
+                    VStack(spacing: _lyricLineSpacing) {
+                        Rectangle()
+                            .fill(Color.clear)
+                            .frame(height: _lyricTopPadding - _lyricLineSpacing)
+                        ForEach(0..<lyricKeys.count, id: \.self) { index in
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(Color.clear)
+                                .frame(height: lineHeights[index])
+                                .contentShape(RoundedRectangle(cornerRadius: 10))
+                                ._onButtonGesture { pressing in
+                                    if pressing {
+                                        pressedIndex = index
+                                    } else {
+                                        pressedIndex = nil
+                                    }
+                                } perform: {
+                                    showingFullContent = false
+                                    audioPlayer.seek(to: lyricKeys[index].lowerBound)
+                                    audioPlayer.play()
+                                    withAnimation(.easeOut) {
+                                        pageOffset = 0
+                                    }
+                                }
+                            if isShowingWaitingProgress && currentIndex == index {
+                                Rectangle()
+                                    .fill(Color.clear)
+                                    .frame(height: 34)
+                            }
+                        }
+                    }
+                    .allowsHitTesting(showingFullContent)
+                }
+            }
+            .introspect(.scrollView, on: .iOS(.v18...)) { scrollView in
+                DispatchQueue.main.async {
+                    underlyingScrollView = scrollView
+                }
+            }
+            .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                -geometry.contentOffset.y + heightBeforeCurrent
+            } action: { oldValue, newValue in
+                pageOffset = newValue
+            }
+            .onScrollPhaseChange { _, newPhase in
+                if newPhase == .interacting || newPhase == .decelerating {
+                    showingFullContent = true
+                    canResetShowingFullContent = false
+                } else {
+                    canResetShowingFullContent = true
+                }
+            }
+            
+            GeometryReader { geometry in
+                ZStack(alignment: .topLeading) {
+                    if lineHeights.count >= lyrics.count {
+                        ForEach(lyricKeys.enumerated(), id: \.offset) { index, range in
+                            LineView(
+                                range: range,
+                                index: index,
+                                text: lyrics[range]!,
+                                currentIndex: currentIndex,
+                                pageOffset: pageOffset,
+                                pageHeight: geometry.size.height,
+                                isPressed: pressedIndex == index,
+                                isShowingWaitingProgress: isShowingWaitingProgress,
+                                lineHeights: $lineHeights,
+                                showingFullContent: $showingFullContent,
+                                canResetShowingFullContent: $canResetShowingFullContent,
+                                updatePageOffset: { newOffset in
+                                    underlyingScrollView?.contentOffset.y = heightBeforeCurrent - newOffset
+                                    pageOffset = newOffset
+                                }
+                            )
+                        }
+                        
+                        if currentIndex < lyrics.count - 1 {
+                            let waitingRange = lyricKeys[currentIndex].upperBound...lyricKeys[currentIndex + 1].lowerBound
+                            let waitingDuration = waitingRange.upperBound - waitingRange.lowerBound
+                            let isShowing = waitingDuration > 5 && waitingRange.contains(currentTime)
+                            WaitingProgressView(
+                                value: currentTime - lyricKeys[currentIndex].upperBound,
+                                duration: waitingDuration
+                            )
+                            .opacity(isShowing ? 1 : 0)
+                            .offset(y: 90)
+                            .animation(.smooth, value: isShowing)
+                            .onChange(of: isShowing) {
+                                isShowingWaitingProgress = isShowing
+                            }
+                        }
+                    }
+                }
+                .padding(.horizontal, 30)
+                .transformEffect(.init(translationX: 0, y: pageOffset))
+                .onAppear {
+                    lineHeights = .init(repeating: 0, count: lyrics.count)
+                }
+                .onChange(of: currentTime) {
+                    // Update current index
+                    for (index, range) in lyricKeys.enumerated() {
+                        if range.contains(currentTime) {
+                            currentIndex = index
+                            break
+                        }
+                    }
+                }
+                .onChange(of: currentIndex) { oldValue, newValue in
+                    updateScrollOffset(fromIndex: oldValue, toIndex: newValue)
+                }
+                .onChange(of: isShowingWaitingProgress) {
+                    updateScrollOffset()
+                }
+            }
+            .allowsHitTesting(false)
+        }
+    }
+    
+    private func updateScrollOffset(
+        fromIndex oldIndex: Int? = nil,
+        toIndex newIndex: Int? = nil
+    ) {
+        var heightBeforeCurrent: CGFloat = 0
+        if currentIndex > 0 {
+            heightBeforeCurrent = lineHeights[0..<currentIndex].reduce(into: 0) {
+                $0 += $1 + 26
+            }
+        }
+        heightBeforeCurrent += isShowingWaitingProgress ? 60 : 0
+        self.heightBeforeCurrent = heightBeforeCurrent
+        
+        var userScrollDelta: CGFloat = 0
+        if showingFullContent, let oldIndex, let newIndex, oldIndex != newIndex {
+            let left: Int
+            let right: Int
+            if oldIndex < newIndex {
+                (left, right) = (oldIndex, newIndex)
+            } else {
+                (left, right) = (newIndex, oldIndex)
+            }
+            userScrollDelta = lineHeights[left..<right].reduce(into: 0) {
+                $0 += $1 + _lyricLineSpacing
+            }
+            if oldIndex > newIndex {
+                userScrollDelta = -userScrollDelta
+            }
+        }
+        
+        underlyingScrollView?.contentOffset.y = heightBeforeCurrent - pageOffset + userScrollDelta
+    }
+    
+    private struct LineView: View {
+        var range: ClosedRange<Double>
+        var index: Int
+        var text: String
+        var currentIndex: Int
+        var pageOffset: CGFloat
+        var pageHeight: CGFloat
+        var isPressed: Bool
+        var isShowingWaitingProgress: Bool
+        @Binding var lineHeights: [CGFloat]
+        @Binding var showingFullContent: Bool
+        @Binding var canResetShowingFullContent: Bool
+        var updatePageOffset: (CGFloat) -> Void
+        @State private var offset: CGFloat = 0
+        var body: some View {
+            HStack {
+                Text(text)
+                    .font(.system(size: 30, weight: .bold))
+                    .lineSpacing(1.5)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 10)
+            }
+            .background {
+                GeometryReader { geometry in
+                    Color.clear
+                        .onChange(of: geometry.size.height, initial: true) {
+                            lineHeights[index] = geometry.size.height
+                        }
+                }
+            }
+            .background {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color.gray)
+                    .opacity(isPressed ? 0.4 : 0)
+                    .padding(.horizontal, -10)
+                    .padding(.vertical, -3)
+            }
+            .opacity(isCurrent ? 1 : 0.6)
+            .blur(radius: showingFullContent || isCurrent ? 0 : max(CGFloat(abs(currentIndex - index)), 1))
+            .scaleEffect(isPressed ? 0.9 : 1)
+            .offset(y: offset)
+            .opacity( // performance: lazy
+                isVisible ? 1 : 0
+            )
+            .animation(.smooth, value: isShowingWaitingProgress)
+            .animation(.easeOut(duration: 0.2), value: isPressed)
+            .onChange(of: lineHeights) {
+                updateOffset()
+            }
+            .onChange(of: currentIndex) {
+                updateOffset(indexBecomingCurrent: currentIndex)
+            }
+            .onChange(of: isShowingWaitingProgress) {
+                updateOffset(indexBecomingCurrent: currentIndex)
+            }
+        }
+        
+        var isCurrent: Bool {
+            (index == currentIndex && !isShowingWaitingProgress)
+        }
+        var isVisible: Bool {
+            -pageOffset < offset + lineHeights[index] * 2
+            && -pageOffset + pageHeight > offset
+        }
+        
+        private func updateOffset(indexBecomingCurrent: Int? = nil) {
+            var heightBefore: CGFloat = 0
+            if index > 0 {
+                heightBefore = lineHeights[0..<index].reduce(into: 0) { $0 += $1 }
+            }
+            
+            var heightBeforeCurrent: CGFloat = 0
+            if currentIndex > 0 {
+                heightBeforeCurrent = lineHeights[0..<currentIndex].reduce(into: 0) {
+                    $0 += $1 + _lyricLineSpacing
+                }
+            }
+            
+            var waitingProgressOffset: CGFloat = 0
+            if isShowingWaitingProgress {
+                if index <= currentIndex {
+                    waitingProgressOffset = -(lineHeights[index] + _lyricLineSpacing)
+                } else {
+                    waitingProgressOffset = -max(lineHeights[currentIndex] - 40, 0)
+                }
+            }
+            
+            func _update() {
+                offset = _lyricTopPadding + heightBefore + CGFloat(index) * _lyricLineSpacing - heightBeforeCurrent + waitingProgressOffset
+            }
+            
+            if let indexBecomingCurrent {
+                if index == indexBecomingCurrent
+                    && canResetShowingFullContent
+                    && isVisible {
+                    canResetShowingFullContent = false
+                    showingFullContent = false
+                    
+                }
+                if !showingFullContent {
+                    withAnimation(.easeOut) {
+                        updatePageOffset(0)
+                    }
+                    
+                    DispatchQueue.main.asyncAfter(
+                        deadline: .now() + 0.1 * max(Double(index - indexBecomingCurrent), 0)
+                    ) {
+                        withAnimation(.spring) {
+                            _update()
+                        }
+                    }
+                } else {
+                    _update()
+                }
+            } else {
+                _update()
+            }
+        }
+    }
+}
+
+private struct WaitingProgressView: View {
+    var value: Double
+    var duration: Double
+    var body: some View {
+        VStack {
+            CustomProgressView(value: value / duration)
+                .frame(height: 15)
+            HStack {
+                Text(formattedTime(from: value))
+                    .font(.system(size: 11))
+                    .opacity(0.6)
+                Spacer()
+                Text(formattedTime(from: duration))
+                    .font(.system(size: 11))
+                    .opacity(0.6)
             }
         }
     }

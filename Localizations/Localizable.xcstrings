@@ -264,6 +264,7 @@
       }
     },
     "已存储" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -274,6 +275,7 @@
       }
     },
     "已添加到收藏" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -474,6 +476,7 @@
       }
     },
     "收藏时出错" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -534,6 +537,7 @@
       }
     },
     "未知错误" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -624,6 +628,7 @@
       }
     },
     "移除时出错" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
