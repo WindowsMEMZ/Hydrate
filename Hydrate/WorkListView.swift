@@ -14,6 +14,7 @@ struct WorkListView: View {
     private var style: WorkListViewStyle = .horizontalScroll
     private var onLastItemAppear: (() -> Void)?
     @Namespace private var navigationNamespace
+    @Environment(SceneDelegate.self) private var sceneDelegate
     
     init(works: [Work]) {
         self.works = works
@@ -114,7 +115,7 @@ struct WorkListView: View {
                                         .redacted(reason: .placeholder)
                                 }
                                 .scaledToFill()
-                                .frame(width: UIScreen.main.bounds.width / 2 - 24, height: UIScreen.main.bounds.width / 2 - 24)
+                                .frame(width: sceneDelegate.keyWindowBounds.width / 2 - 24, height: sceneDelegate.keyWindowBounds.width / 2 - 24)
                                 .clipped()
                                 .cornerRadius(7)
                                 .overlay(RoundedRectangle(cornerRadius: 7).strokeBorder(Color.gray.opacity(0.6)))
@@ -145,7 +146,7 @@ struct WorkListView: View {
                         VStack(alignment: .leading) {
                             Rectangle()
                                 .fill(Color.gray)
-                                .frame(width: UIScreen.main.bounds.width / 2 - 24, height: UIScreen.main.bounds.width / 2 - 24)
+                                .frame(width: sceneDelegate.keyWindowBounds.width / 2 - 24, height: sceneDelegate.keyWindowBounds.width / 2 - 24)
                                 .cornerRadius(7)
                                 .overlay(RoundedRectangle(cornerRadius: 7).strokeBorder(Color.gray.opacity(0.6)))
                                 .redacted(reason: .placeholder)

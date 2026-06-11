@@ -16,6 +16,7 @@ import DarockFoundation
 
 struct NowPlayingView: View {
     @Namespace private var coverScaleNamespace
+    @Environment(SceneDelegate.self) private var sceneDelegate
     @State private var audioPlayer = AudioPlayer.shared
     @State private var currentPlaybackTime = 0.0
     @State private var currentScrolledId = 0.0
@@ -187,7 +188,7 @@ struct NowPlayingView: View {
                 }
                 .navigationTitle(media.sourceWork.title)
                 .onTapGesture { location in
-                    if location.y > UIScreen.main.bounds.height / 2 {
+                    if location.y > sceneDelegate.keyWindowBounds.height / 2 {
                         isShowingControls = true
                         resetMenuDismissTimer()
                     } else {

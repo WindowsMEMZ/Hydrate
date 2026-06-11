@@ -40,6 +40,7 @@
 		8CD0E1DD2DC3B07400997186 /* UIRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD0E1DC2DC3B06900997186 /* UIRepresentable.swift */; };
 		8CD0E1E02DC45C3700997186 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD0E1DF2DC45C3400997186 /* AboutView.swift */; };
 		8CE4D67E2F31B11C004757C6 /* ColorThief.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE4D67D2F31B11C004757C6 /* ColorThief.swift */; };
+		8CEF72E22FDAB9C400EE37B5 /* EnvironmentReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CEF72E12FDAB9C000EE37B5 /* EnvironmentReader.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -73,6 +74,7 @@
 		8CD0E1DE2DC3DF5400997186 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		8CD0E1DF2DC45C3400997186 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		8CE4D67D2F31B11C004757C6 /* ColorThief.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorThief.swift; sourceTree = "<group>"; };
+		8CEF72E12FDAB9C000EE37B5 /* EnvironmentReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnvironmentReader.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -161,6 +163,7 @@
 				8CD0E1D22DC3285E00997186 /* StarButton.swift */,
 				8CD0E1C82DC26DA200997186 /* MarqueeText.swift */,
 				8CE4D67D2F31B11C004757C6 /* ColorThief.swift */,
+				8CEF72E12FDAB9C000EE37B5 /* EnvironmentReader.swift */,
 				8CD0E1D42DC33A2700997186 /* String+.swift */,
 				8CD0E1A12DC24ADA00997186 /* ClosedRange+.swift */,
 				8CD0E19F2DC245FF00997186 /* AVPlayer+PeriodicTimePublisher.swift */,
@@ -268,6 +271,7 @@
 				8CD0E1CD2DC3220C00997186 /* LibraryView.swift in Sources */,
 				8C39621F2DC2225600372D10 /* ASMROneApp.swift in Sources */,
 				8C3962202DC2225600372D10 /* ContentView.swift in Sources */,
+				8CEF72E22FDAB9C400EE37B5 /* EnvironmentReader.swift in Sources */,
 				8C4D05FA2FD959020085611C /* AudioPlayer.swift in Sources */,
 				8CD0E1932DC2272800997186 /* Models.swift in Sources */,
 				8C0E54BF2DC46B2400FE6B5B /* DownloadManager.swift in Sources */,

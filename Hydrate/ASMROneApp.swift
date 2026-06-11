@@ -5,6 +5,7 @@
 //  Created by Mark Chan on 2025/4/30.
 //
 
+import Combine
 import SwiftUI
 import AVFoundation
 import DarockFoundation
@@ -20,8 +21,6 @@ struct HydrateApp: App {
 }
 
 class AppDelegate: NSObject, UIApplicationDelegate {
-    @Environment(\.colorScheme) var colorScheme
-    
     func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil
@@ -29,5 +28,38 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         try? AVAudioSession.sharedInstance().setCategory(.playback)
         
         return true
+    }
+    
+    func application(
+        _ application: UIApplication,
+        configurationForConnecting connectingSceneSession: UISceneSession,
+        options: UIScene.ConnectionOptions
+    ) -> UISceneConfiguration {
+        let config = UISceneConfiguration(
+            name: nil,
+            sessionRole: connectingSceneSession.role
+        )
+        if connectingSceneSession.role == .windowApplication {
+            config.delegateClass = SceneDelegate.self
+        }
+        return config
+    }
+}
+
+@Observable
+class SceneDelegate: NSObject, UIWindowSceneDelegate {
+    weak var windowScene: UIWindowScene?
+    
+    func scene(
+        _ scene: UIScene,
+        willConnectTo session: UISceneSession,
+        options connectionOptions: UIScene.ConnectionOptions
+    ) {
+        guard let scene = scene as? UIWindowScene else { return }
+        self.windowScene = scene
+    }
+    
+    var keyWindowBounds: CGRect {
+        windowScene?.keyWindow?.bounds ?? .zero
     }
 }

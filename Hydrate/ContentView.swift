@@ -16,6 +16,7 @@ import SDWebImageSwiftUI
 
 struct ContentView: View {
     @FocusState var isSearchKeyboardFocused: Bool
+    @Environment(SceneDelegate.self) private var sceneDelegate
     @Environment(\.colorScheme) private var colorScheme
     @AppStorage("AccountToken") private var accountToken = ""
     @AppStorage("MainTabSelection") private var tabSelection = 1
@@ -192,7 +193,7 @@ struct ContentView: View {
         .showDragIndicator(false)
         .enableSwipeToDismiss()
         .enableFloatingIPadSheet(false)
-        .sheetWidth(.absolute(UIScreen.main.bounds.width))
+        .sheetWidth(.absolute(sceneDelegate.keyWindowBounds.width))
         .customAnimation(.spring(response: 0.4, dampingFraction: 1, blendDuration: 0.8))
         .customBackground {
             MeshGradient(
