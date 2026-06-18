@@ -74,16 +74,44 @@
       }
     },
     "10 条" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "10 Items"
+          }
+        }
+      }
     },
     "20 条" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "20 Items"
+          }
+        }
+      }
     },
     "50 条" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "50 Items"
+          }
+        }
+      }
     },
     "100 条" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100 Items"
+          }
+        }
+      }
     },
     "App 图标设计" : {
       "localizations" : {
@@ -106,7 +134,7 @@
       }
     },
     "English" : {
-
+      "shouldTranslate" : false
     },
     "Hydrate 用于学习 Swift 以及 SwiftUI 开发以及供个人、非商业性地使用，内容版权属于 [asmr.one](https://asmr.one) 或音声原发布平台以及音声作者本人。" : {
       "localizations" : {
@@ -169,7 +197,14 @@
       }
     },
     "保留最近浏览" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep Recents"
+          }
+        }
+      }
     },
     "停止下载" : {
       "localizations" : {
@@ -252,7 +287,14 @@
       }
     },
     "字幕" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subtitle"
+          }
+        }
+      }
     },
     "密码" : {
       "localizations" : {
@@ -660,16 +702,37 @@
       }
     },
     "简体中文" : {
-
+      "shouldTranslate" : false
     },
     "翻译目标语言" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Translation Target"
+          }
+        }
+      }
     },
     "自动" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto"
+          }
+        }
+      }
     },
     "自动翻译字幕内容" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto Translate Subtitles"
+          }
+        }
+      }
     },
     "账户" : {
       "localizations" : {
@@ -692,7 +755,14 @@
       }
     },
     "转写未提供字幕文件的音声" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transcribe Audio without Subtitles"
+          }
+        }
+      }
     },
     "软件包引用" : {
       "localizations" : {
