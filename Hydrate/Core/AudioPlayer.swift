@@ -5,10 +5,14 @@
 //  Created by memz233 on 6/10/26.
 //
 
+import OSLog
+import Speech
 import Combine
 import SwiftUI
+import Network
 import Foundation
 import NowPlaying
+import Translation
 import AVFoundation
 import DarockFoundation
 
@@ -26,6 +30,8 @@ final class AudioPlayer: MediaSessionRepresentable {
     }
     
     private var _observers: [AnyCancellable] = []
+    private let _networkPathMonitor = NWPathMonitor()
+    private var isNetworkConstrained = false
     
     init() {
         if let _latestNowPlaying = try? String(contentsOfFile: NSHomeDirectory() + "/Documents/LatestNowPlaying.json", encoding: .utf8),
@@ -37,6 +43,19 @@ final class AudioPlayer: MediaSessionRepresentable {
         _player.publisher(for: \.timeControlStatus).sink { [weak self] status in
             self?.timeControlStatusDidUpdate(status)
         }.store(in: &_observers)
+        
+        _networkPathMonitor.pathUpdateHandler = { [weak self] path in
+            guard let self else { return }
+            isNetworkConstrained = path.isConstrained
+        }
+        _networkPathMonitor.start(queue: .init(
+            label: "com.memz233.Hydrate.AudioPlayer.network-monitor",
+            qos: .background
+        ))
+    }
+    
+    deinit {
+        _networkPathMonitor.cancel()
     }
     
     var artworkBackgroundColors = Array(repeating: Color(uiColor: .darkGray), count: 16)
@@ -47,6 +66,13 @@ final class AudioPlayer: MediaSessionRepresentable {
     private var _playbackStateUpdateDate = Date.now
     var elapsedTime: TimeInterval = 0
     private var mediaSession: MediaSession<AudioPlayer>?
+    
+    @ObservationIgnored
+    @AppStorage("AutoTranscribeEnabled") private var autoTranscribeEnabled = false
+    @ObservationIgnored
+    @AppStorage("TranscriptionTranslationEnabled") private var transcriptionTranslationEnabled = false
+    private var transcribingTask: Task<Void, Never>?
+    var transcriptions: [Transcription]?
     
     var content: (any MediaContentRepresentable)? {
         guard let media else { return nil }
@@ -142,9 +168,14 @@ final class AudioPlayer: MediaSessionRepresentable {
     }
     
     private func mediaDidUpdate() {
+        transcribingTask?.cancel()
+        transcribingTask = nil
+        transcriptions = nil
+        
         guard let media else { return }
         
-        let newItem = AVPlayerItem(url: URL(string: media.playURL)!)
+        let mediaURL = URL(string: media.playURL)!
+        let newItem = AVPlayerItem(url: mediaURL)
         _player.replaceCurrentItem(with: newItem)
         if !media.preventAutoPlaying {
             try? AVAudioSession.sharedInstance().setActive(true)
@@ -168,8 +199,35 @@ final class AudioPlayer: MediaSessionRepresentable {
             }
         }
         
+        if media.lyrics == nil && autoTranscribeEnabled {
+            transcribingTask = Task { [weak self] in
+                guard let self else { return }
+                
+                transcriptions = []
+                let transcriber = await LyricsTranscriber(for: _player)
+                let constrained = isNetworkConstrained
+                do {
+                    if !isNetworkConstrained {
+                        try await transcriber.transcribeStream(mediaURL) { [weak self] result in
+                            self?._updateTranscription(from: result, constrained: constrained)
+                        }
+                    } else {
+                        try await transcriber.transcribe { [weak self] result in
+                            self?._updateTranscription(from: result, constrained: constrained)
+                        }
+                    }
+                } catch {
+                    os_log(.fault, "Transcriber was interrupted with error: \(error)")
+                }
+            }
+        }
+        
         if let jsonData = jsonString(from: media) {
-            try? jsonData.write(toFile: NSHomeDirectory() + "/Documents/LatestNowPlaying.json", atomically: true, encoding: .utf8)
+            try? jsonData.write(
+                toFile: NSHomeDirectory() + "/Documents/LatestNowPlaying.json",
+                atomically: true,
+                encoding: .utf8
+            )
         }
     }
     private func timeControlStatusDidUpdate(_ status: AVPlayer.TimeControlStatus) {
@@ -183,5 +241,73 @@ final class AudioPlayer: MediaSessionRepresentable {
         @unknown default: break
         }
         elapsedTime = currentTime
+    }
+    
+    private func _updateTranscription(
+        from result: SpeechTranscriber.Result,
+        constrained: Bool
+    ) {
+        let resultID = result.range.start.value.hashValue
+        var timeRange: ClosedRange<Double>?
+        if !constrained {
+            timeRange = result.range.start.seconds...result.range.end.seconds
+        }
+        if var last = transcriptions?.last,
+           last.id == resultID || result.isFinal {
+            last.attributedString = result.text
+            last.isFinal = result.isFinal
+            last._timeRange = timeRange
+            // modification requires exclusive access
+            if let count = transcriptions?.count {
+                transcriptions?[count - 1] = last
+                
+                if result.isFinal, transcriptionTranslationEnabled {
+                    Task {
+                        let session = TranslationSession(installedSource: .init(identifier: "ja"), target: nil)
+                        if let result = try? await session.translate(last.string) {
+                            last.translation = result.targetText
+                            transcriptions?[count - 1] = last
+                        }
+                    }
+                }
+            }
+        } else {
+            transcriptions?.append(.init(
+                id: resultID,
+                attributedString: result.text,
+                isFinal: result.isFinal,
+                _timeRange: timeRange
+            ))
+        }
+    }
+    
+    struct Transcription: Identifiable, Hashable {
+        let id: Int
+        var attributedString: AttributedString
+        var isFinal: Bool
+        var translation: String?
+        
+        var _timeRange: ClosedRange<Double>?
+        
+        var string: String {
+            String(attributedString.characters)
+        }
+    }
+}
+
+extension Array<AudioPlayer.Transcription> {
+    func asLyrics() -> [ClosedRange<Double>: String]? {
+        if contains(where: { $0._timeRange != nil }) {
+            return reduce(into: [:]) { partialResult, transcription in
+                if let range = transcription._timeRange {
+                    partialResult.updateValue(
+                        transcription.string,
+                        forKey: range
+                    )
+                }
+            }
+        } else {
+            return nil
+        }
     }
 }

@@ -11,6 +11,7 @@ import SwiftUI
 import DarockUI
 import MediaPlayer
 import AVFoundation
+import NaturalLanguage
 import DarockFoundation
 @_spi(Advanced) import SwiftUIIntrospect
 
@@ -40,6 +41,12 @@ struct NowPlayingView: View {
                 ZStack {
                     if let lyrics = media.lyrics, !lyrics.isEmpty {
                         LyricsView(lyrics: lyrics, currentTime: currentPlaybackTime)
+                    } else if let transcriptions = audioPlayer.transcriptions {
+                        if let lyrics = transcriptions.asLyrics() {
+                            LyricsView(lyrics: lyrics, currentTime: currentPlaybackTime)
+                        } else {
+                            TranscriptionTextView(transcriptions: transcriptions)
+                        }
                     } else {
                         Text("文本不可用")
                     }
@@ -181,8 +188,8 @@ struct NowPlayingView: View {
                             .padding(.bottom, 40)
                         }
                     }
-                    .opacity(isShowingControls || media.lyrics == nil ? 1.0 : 0.0)
-                    .offset(y: isShowingControls || media.lyrics == nil ? 0 : 10)
+                    .opacity(isShowingControls || alwaysShowControls ? 1.0 : 0.0)
+                    .offset(y: isShowingControls || alwaysShowControls ? 0 : 10)
                     .animation(.easeOut(duration: 0.2), value: isShowingControls)
                     .ignoresSafeArea()
                 }
@@ -229,6 +236,10 @@ struct NowPlayingView: View {
     
     var currentItemTotalTime: TimeInterval {
         audioPlayer.audioDuration ?? 0
+    }
+    var alwaysShowControls: Bool {
+        audioPlayer.media?.lyrics == nil
+        && audioPlayer.transcriptions?.asLyrics() == nil
     }
     
     struct WaitingDotsView: View {
@@ -363,6 +374,7 @@ private let _lyricTopPadding: CGFloat = 80
 private struct LyricsView: View {
     var lyrics: [ClosedRange<Double>: String]
     var currentTime: Double
+    @AppStorage("TranscriptionTranslationEnabled") private var transcriptionTranslationEnabled = false
     @State private var audioPlayer = AudioPlayer.shared
     @State private var currentIndex = 0
     @State private var lineHeights: [CGFloat] = []
@@ -373,6 +385,7 @@ private struct LyricsView: View {
     @State private var canResetShowingFullContent = false
     @State private var isShowingWaitingProgress = false
     @State private var pressedIndex: Int?
+    @State private var translations: [String?] = []
     var body: some View {
         ZStack(alignment: .top) {
             let lyricKeys = Array<ClosedRange<Double>>(lyrics.keys)
@@ -444,6 +457,7 @@ private struct LyricsView: View {
                                 range: range,
                                 index: index,
                                 text: lyrics[range]!,
+                                secondaryText: translations.count > index ? translations[index] : nil,
                                 currentIndex: currentIndex,
                                 pageOffset: pageOffset,
                                 pageHeight: geometry.size.height,
@@ -478,8 +492,19 @@ private struct LyricsView: View {
                 }
                 .padding(.horizontal, 30)
                 .transformEffect(.init(translationX: 0, y: pageOffset))
-                .onAppear {
+                .onChange(of: lyrics.count, initial: true) {
                     lineHeights = .init(repeating: 0, count: lyrics.count)
+                    
+                    if transcriptionTranslationEnabled {
+                        Task {
+                            let contents = lyricKeys.map { lyrics[$0]! }
+                            if NLLanguageRecognizer.dominantLanguage(for: contents.joined(separator: "\n")) == .japanese {
+                                if let results = await LyricTranslation.shared.translate(contents) {
+                                    translations = results
+                                }
+                            }
+                        }
+                    }
                 }
                 .onChange(of: currentTime) {
                     // Update current index
@@ -525,6 +550,7 @@ private struct LyricsView: View {
         var range: ClosedRange<Double>
         var index: Int
         var text: String
+        var secondaryText: String?
         var currentIndex: Int
         var pageOffset: CGFloat
         var pageHeight: CGFloat
@@ -537,17 +563,31 @@ private struct LyricsView: View {
         @State private var offset: CGFloat = 0
         var body: some View {
             HStack {
-                Text(text)
-                    .font(.system(size: 30, weight: .bold))
-                    .lineSpacing(1.5)
-                    .fixedSize(horizontal: false, vertical: true)
+                VStack(alignment: .leading) {
+                    Text(text)
+                        .font(.system(size: 30, weight: .bold))
+                        .lineSpacing(1.5)
+                        .fixedSize(horizontal: false, vertical: true)
+                    if let secondaryText {
+                        Text(secondaryText)
+                            .font(.system(size: 20, weight: .semibold))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
                 Spacer(minLength: 10)
             }
             .background {
                 GeometryReader { geometry in
                     Color.clear
                         .onChange(of: geometry.size.height, initial: true) {
-                            lineHeights[index] = geometry.size.height
+                            if index < lineHeights.count {
+                                lineHeights[index] = geometry.size.height
+                            }
+                        }
+                        .onChange(of: lineHeights.count) {
+                            if index < lineHeights.count {
+                                lineHeights[index] = geometry.size.height
+                            }
                         }
                 }
             }
@@ -673,6 +713,39 @@ private struct WaitingProgressView: View {
     }
 }
 
+private struct TranscriptionTextView: View {
+    var transcriptions: [AudioPlayer.Transcription]
+    @State private var scrollPosition = ScrollPosition()
+    var body: some View {
+        ScrollView {
+            HStack {
+                VStack(alignment: .leading) {
+                    ForEach(transcriptions) { transcription in
+                        Text(transcription.attributedString)
+                            .font(.system(size: 20, weight: .semibold))
+                        if let translation = transcription.translation {
+                            Text(translation)
+                                .font(.system(size: 14))
+                                .opacity(0.6)
+                        }
+                    }
+                    Spacer()
+                    .frame(height: 450)
+                }
+                Spacer(minLength: 10)
+            }
+            .padding()
+            .padding(.top, 25)
+        }
+        .scrollPosition($scrollPosition)
+        .onChange(of: transcriptions) {
+            withAnimation {
+                scrollPosition.scrollTo(edge: .bottom)
+            }
+        }
+    }
+}
+
 @_effects(readnone)
 private func formattedTime(from seconds: Double) -> String {
     if seconds.isNaN {
@@ -695,7 +768,7 @@ struct CustomProgressView: View {
                     .frame(height: 6)
                 Rectangle()
                     .fill(.white)
-                    .frame(width: value / total * geometry.size.width, height: 6)
+                    .frame(width: max(value / total, 0) * geometry.size.width, height: 6)
             }
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .animation(.linear(duration: animationDuration), value: value)

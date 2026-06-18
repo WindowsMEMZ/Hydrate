@@ -9,6 +9,7 @@ import SwiftUI
 import DarockUI
 import NotifKit
 import Alamofire
+import Translation
 import DarockFoundation
 
 struct AccountView: View {
@@ -16,6 +17,9 @@ struct AccountView: View {
     @AppStorage("AccountToken") private var accountToken = ""
     @AppStorage("CachedUserName") private var cachedUserName = ""
     @AppStorage("RecentWorkPreservingCount") private var recentWorkPreservingCount = 10
+    @AppStorage("AutoTranscribeEnabled") private var autoTranscribeEnabled = false
+    @AppStorage("TranscriptionTranslationEnabled") private var transcriptionTranslationEnabled = false
+    @AppStorage("TranscriptionTranslationTarget") private var transcriptionTranslationTarget = ""
     var body: some View {
         NavigationStack {
             List {
@@ -49,6 +53,39 @@ struct AccountView: View {
                     }
                 } header: {
                     Text("资料库")
+                }
+                Section {
+                    Toggle("转写未提供字幕文件的音声", isOn: $autoTranscribeEnabled)
+                        .onChange(of: autoTranscribeEnabled) {
+                            if autoTranscribeEnabled {
+                                Task {
+                                    print(try? await LyricsTranscriber.ensureAssets())
+                                    print("Success")
+                                }
+                            }
+                        }
+                    Toggle(isOn: $transcriptionTranslationEnabled) {
+                        Text("自动翻译字幕内容")
+                            .background {
+                                if transcriptionTranslationEnabled {
+                                    Color.clear
+                                        .translationTask(source: .init(identifier: "ja"), target: LyricTranslation._language(fromTarget: transcriptionTranslationTarget)) { session in
+                                            Task {
+                                                try? await session.translate("こんにちは")
+                                            }
+                                        }
+                                }
+                            }
+                    }
+                    if transcriptionTranslationEnabled {
+                        Picker("翻译目标语言", selection: $transcriptionTranslationTarget) {
+                            Text("自动").tag("")
+                            Text("English").tag("en")
+                            Text("简体中文").tag("zh-Hans")
+                        }
+                    }
+                } header: {
+                    Text("字幕")
                 }
                 Section {
                     NavigationLink(destination: { AboutView() }, label: {
