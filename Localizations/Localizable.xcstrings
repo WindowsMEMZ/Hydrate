@@ -317,6 +317,16 @@
         }
       }
     },
+    "在 App 切换器中模糊内容" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blur app contents in App Switcher"
+          }
+        }
+      }
+    },
     "在“账户”页面登录以访问资料库" : {
       "localizations" : {
         "en" : {
@@ -851,6 +861,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Log out"
+          }
+        }
+      }
+    },
+    "通用" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "General"
           }
         }
       }

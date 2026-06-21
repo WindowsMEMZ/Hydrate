@@ -20,6 +20,7 @@ struct AccountView: View {
     @AppStorage("AutoTranscribeEnabled") private var autoTranscribeEnabled = false
     @AppStorage("TranscriptionTranslationEnabled") private var transcriptionTranslationEnabled = false
     @AppStorage("TranscriptionTranslationTarget") private var transcriptionTranslationTarget = ""
+    @AppStorage("BlurContentInAppSwitcher") private var blurContentInAppSwitcher = false
     var body: some View {
         NavigationStack {
             List {
@@ -43,6 +44,11 @@ struct AccountView: View {
                     NavigationLink(destination: { RegisterView() }, label: {
                         Label("注册", systemImage: "person.badge.plus")
                     })
+                }
+                Section {
+                    Toggle("在 App 切换器中模糊内容", isOn: $blurContentInAppSwitcher)
+                } header: {
+                    Text("通用")
                 }
                 Section {
                     Picker("保留最近浏览", selection: $recentWorkPreservingCount) {

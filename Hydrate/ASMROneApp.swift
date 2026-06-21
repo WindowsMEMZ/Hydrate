@@ -56,6 +56,9 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 class SceneDelegate: NSObject, UIWindowSceneDelegate {
     weak var windowScene: UIWindowScene?
     
+    @ObservationIgnored
+    @AppStorage("BlurContentInAppSwitcher") private var blurContentInAppSwitcher = false
+    
     func scene(
         _ scene: UIScene,
         willConnectTo session: UISceneSession,
@@ -65,7 +68,29 @@ class SceneDelegate: NSObject, UIWindowSceneDelegate {
         self.windowScene = scene
     }
     
+    func sceneDidEnterBackground(_ scene: UIScene) {
+        guard let scene = scene as? UIWindowScene,
+              let window = scene.keyWindow else { return }
+        
+        if blurContentInAppSwitcher {
+            blurEffectView.frame = window.bounds
+            if blurEffectView.superview == nil {
+                window.addSubview(blurEffectView)
+            }
+        }
+    }
+    func sceneWillEnterForeground(_ scene: UIScene) {
+        blurEffectView.removeFromSuperview()
+    }
+    
     var keyWindowBounds: CGRect {
         windowScene?.keyWindow?.bounds ?? .zero
     }
+    
+    private let blurEffectView: UIView = {
+        let view = UIVisualEffectView(
+            effect: UIBlurEffect(style: .systemThinMaterial)
+        )
+        return view
+    }()
 }
