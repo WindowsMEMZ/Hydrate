@@ -24,7 +24,12 @@ struct ContentView: View {
     @State private var isAccountManagementPresented = false
     var body: some View {
         ZStack(alignment: .bottom) {
-            TabView(selection: $tabSelection) {
+            TabView(selection: .init { tabSelection } set: {
+                if tabSelection == $0 && $0 == 3 {
+                    isSearchKeyboardFocused = true
+                }
+                tabSelection = $0
+            }) {
                 Tab(value: 1) {
                     NavigationStack {
                         HomeView()

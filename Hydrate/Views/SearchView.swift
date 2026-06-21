@@ -128,8 +128,22 @@ struct SearchView: View {
         }
         .onReceive(performSearchSubject) { text in
             performSearch(text)
-            searchText = text
-            recentSearchInsert(.init(tokens: [], text: searchText))
+            
+            let textComponents = text.components(separatedBy: .whitespaces)
+            var tokens: [SearchToken] = []
+            var skipIndices: Set<Int> = []
+            for (index, component) in textComponents.enumerated() {
+                if let token = SearchToken(prompt: component) {
+                    tokens.append(token)
+                    skipIndices.insert(index)
+                }
+            }
+            
+            searchText = textComponents.enumerated().filter {
+                !skipIndices.contains($0) && $1 == $1
+            }.map { $1 }.joined(separator: " ")
+            searchTokens = tokens
+            recentSearchInsert(.init(tokens: tokens, text: searchText))
             updateSearchHistory()
         }
     }

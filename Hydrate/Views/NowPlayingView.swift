@@ -72,6 +72,7 @@ struct NowPlayingView: View {
 }
 
 struct _NowPlayingHeaderView: View {
+    @Environment(\.dismiss) private var dismiss
     @AppStorage("AccountToken") private var accountToken = ""
     @State private var audioPlayer = AudioPlayer.shared
     var body: some View {
@@ -100,6 +101,7 @@ struct _NowPlayingHeaderView: View {
                             ForEach(nowPlayingWork.vas, id: \.self) { va in
                                 Button(action: {
                                     performSearchSubject.send("$va:\(va.name)$")
+                                    dismiss()
                                 }, label: {
                                     Label(va.name, systemImage: "magnifyingglass")
                                 })

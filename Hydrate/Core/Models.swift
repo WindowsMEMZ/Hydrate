@@ -289,6 +289,40 @@ enum SearchToken: Identifiable, Hashable, Codable {
         }
     }
 }
+extension SearchToken {
+    init?(prompt: String) {
+        var prompt = prompt
+        // $tag:someTag$
+        // 1 2 3   4   5
+        guard prompt.count >= 5
+                && prompt.removeFirst() == "$"
+                && prompt.removeLast() == "$" else {
+            return nil
+        }
+        
+        let _sepPrompt = prompt.split(separator: ":", maxSplits: 1)
+        guard _sepPrompt.count == 2 else { return nil }
+        let (type, content) = (_sepPrompt[0], String(_sepPrompt[1]))
+        switch type {
+        case "tag": self = .tag(content)
+        case "circle": self = .circle(content)
+        case "va": self = .va(content)
+        case "duration": self = .duration(content)
+        case "rate": self = .rate(content)
+        case "price": self = .price(content)
+        case "sell": self = .sell(content)
+        case "age": self = .age(content)
+        case "lang": self = .lang(content)
+        case "-tag": self = .antiTag(content)
+        case "-duration": self = .antiDuration(content)
+        case "-circie": self = .antiCircle(content)
+        case "-va": self = .antiVA(content)
+        case "-age": self = .antiAge(content)
+        case "-lang": self = .antiLang(content)
+        default: return nil
+        }
+    }
+}
 
 struct RecentSearchItem: Identifiable, Hashable, Equatable, Codable {
     var id: UUID = UUID()
