@@ -31,7 +31,6 @@
 		8CD0E19D2DC2447600997186 /* NowPlayingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD0E19C2DC2446E00997186 /* NowPlayingView.swift */; };
 		8CD0E1A02DC245FF00997186 /* AVPlayer+PeriodicTimePublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD0E19F2DC245FF00997186 /* AVPlayer+PeriodicTimePublisher.swift */; };
 		8CD0E1A22DC24ADF00997186 /* ClosedRange+.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD0E1A12DC24ADA00997186 /* ClosedRange+.swift */; };
-		8CD0E1A52DC24E4D00997186 /* BottomSheet in Frameworks */ = {isa = PBXBuildFile; productRef = 8CD0E1A42DC24E4D00997186 /* BottomSheet */; };
 		8CD0E1A72DC24F6000997186 /* LyricParsers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD0E1A62DC24F5B00997186 /* LyricParsers.swift */; };
 		8CD0E1C92DC26DA200997186 /* MarqueeText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD0E1C82DC26DA200997186 /* MarqueeText.swift */; };
 		8CD0E1CB2DC27B0E00997186 /* SearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD0E1CA2DC27B0A00997186 /* SearchView.swift */; };
@@ -94,7 +93,6 @@
 			files = (
 				8C0E550A2DC4EDCF00FE6B5B /* SDWebImageSwiftUI in Frameworks */,
 				8C39622B2DC2246C00372D10 /* NotifKit in Frameworks */,
-				8CD0E1A52DC24E4D00997186 /* BottomSheet in Frameworks */,
 				8C3962282DC2244D00372D10 /* DarockUI in Frameworks */,
 				8CD0E19B2DC23B7000997186 /* SwiftUIIntrospect in Frameworks */,
 				8C3962252DC2244400372D10 /* DarockFoundation in Frameworks */,
@@ -223,7 +221,6 @@
 				8C3962272DC2244D00372D10 /* DarockUI */,
 				8C39622A2DC2246C00372D10 /* NotifKit */,
 				8CD0E19A2DC23B7000997186 /* SwiftUIIntrospect */,
-				8CD0E1A42DC24E4D00997186 /* BottomSheet */,
 				8C0E55092DC4EDCF00FE6B5B /* SDWebImageSwiftUI */,
 			);
 			productName = ASMROne;
@@ -260,7 +257,6 @@
 				8C3962262DC2244D00372D10 /* XCRemoteSwiftPackageReference "DarockUI" */,
 				8C3962292DC2246C00372D10 /* XCRemoteSwiftPackageReference "NotifKit" */,
 				8CD0E1992DC23B7000997186 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */,
-				8CD0E1A32DC24E4D00997186 /* XCRemoteSwiftPackageReference "BottomSheet" */,
 				8C0E55072DC4ECA600FE6B5B /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -596,15 +592,7 @@
 			repositoryURL = "https://github.com/siteline/SwiftUI-Introspect";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.3.0;
-			};
-		};
-		8CD0E1A32DC24E4D00997186 /* XCRemoteSwiftPackageReference "BottomSheet" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/lucaszischka/BottomSheet";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 3.1.1;
+				minimumVersion = 26.0.1;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
@@ -634,11 +622,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 8CD0E1992DC23B7000997186 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */;
 			productName = SwiftUIIntrospect;
-		};
-		8CD0E1A42DC24E4D00997186 /* BottomSheet */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 8CD0E1A32DC24E4D00997186 /* XCRemoteSwiftPackageReference "BottomSheet" */;
-			productName = BottomSheet;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

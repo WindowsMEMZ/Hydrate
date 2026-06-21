@@ -5,8 +5,8 @@
 //  Created by Mark Chan on 2025/4/30.
 //
 
+import OSLog
 import Foundation
-import DarockFoundation
 
 func parseVTT(_ content: String) -> [ClosedRange<Double>: String] {
     var result = [ClosedRange<Double>: String]()
@@ -64,6 +64,7 @@ func parseVTT(_ content: String) -> [ClosedRange<Double>: String] {
 func parseLRC(_ content: String) -> [ClosedRange<Double>: String] {
     struct LRCLine {
         let time: Double
+        var endTime: Double?
         let text: String
     }
     
@@ -90,7 +91,11 @@ func parseLRC(_ content: String) -> [ClosedRange<Double>: String] {
             let lyricRange = match.range(at: 4)
             let text = lyricRange.location != NSNotFound ? String(trimmed[Range(lyricRange, in: trimmed)!]).trimmingCharacters(in: .whitespaces) : ""
             
-            lines.append(LRCLine(time: time, text: text))
+            if text.isEmpty && !lines.isEmpty {
+                lines[lines.count - 1].endTime = time
+            } else {
+                lines.append(LRCLine(time: time, text: text))
+            }
         }
     }
     
@@ -99,7 +104,9 @@ func parseLRC(_ content: String) -> [ClosedRange<Double>: String] {
     for (index, line) in lines.enumerated() {
         let start = line.time
         let end: Double
-        if index + 1 < lines.count {
+        if let endTime = line.endTime {
+            end = endTime
+        } else if index + 1 < lines.count {
             end = lines[index + 1].time
         } else {
             end = start + 5.0
@@ -134,20 +141,34 @@ func parseLyrics(
     guard let (track, fileTypeHint) = _locateLyricFile(
         for: audioTrack,
         in: allTracks
-    ) else {
+    ), let url = URL(string: track.mediaStreamUrl ?? "") else {
+        return nil
+    }
+    guard let (data, _) = try? await URLSession.shared.data(from: url) else {
         return nil
     }
     
-    let result = await requestString(track.mediaStreamUrl!)
-    if case let .success(respStr) = result {
-        switch fileTypeHint {
-        case "vtt":
-            return parseVTT(respStr)
-        case "lrc":
-            return parseLRC(respStr)
-        default: return nil
-        }
+    let respStr: String
+    if let str = String(data: data, encoding: .utf8) {
+        respStr = str
+    } else if let str = String(
+        data: data,
+        encoding: .init(rawValue: CFStringConvertEncodingToNSStringEncoding(
+            CFStringEncoding(CFStringEncodings.GB_18030_2000.rawValue)
+        ))
+    ) {
+        os_log(.error, "Cannot parse lyrics data as UTF8, using GB18030")
+        respStr = str
     } else {
+        os_log(.fault, "Cannot convert lyrics data to String")
         return nil
+    }
+    
+    switch fileTypeHint {
+    case "vtt":
+        return parseVTT(respStr)
+    case "lrc":
+        return parseLRC(respStr)
+    default: return nil
     }
 }

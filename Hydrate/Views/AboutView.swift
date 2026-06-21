@@ -47,7 +47,6 @@ struct AboutView: View {
             }
             Section {
                 SinglePackageBlock(name: "Alamofire", license: "MIT license")
-                SinglePackageBlock(name: "BottomSheet", license: "MIT license")
                 SinglePackageBlock(name: "SDWebImage", license: "MIT license")
                 SinglePackageBlock(name: "SDWebImageSwiftUI", license: "MIT license")
                 SinglePackageBlock(name: "swiftui-introspect", license: "MIT license")

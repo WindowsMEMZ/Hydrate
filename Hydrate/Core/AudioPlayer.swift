@@ -216,11 +216,15 @@ final class AudioPlayer: MediaSessionRepresentable {
                 do {
                     if !isNetworkConstrained {
                         try await transcriber.transcribeStream(mediaURL) { [weak self] result in
-                            self?._updateTranscription(from: result, constrained: constrained)
+                            DispatchQueue.main.async {
+                                self?._updateTranscription(from: result, constrained: constrained)
+                            }
                         }
                     } else {
                         try await transcriber.transcribe { [weak self] result in
-                            self?._updateTranscription(from: result, constrained: constrained)
+                            DispatchQueue.main.async {
+                                self?._updateTranscription(from: result, constrained: constrained)
+                            }
                         }
                     }
                 } catch {

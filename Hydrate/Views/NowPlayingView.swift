@@ -9,13 +9,137 @@ import AVKit
 import Combine
 import SwiftUI
 import DarockUI
+import Alamofire
 import MediaPlayer
 import AVFoundation
 import NaturalLanguage
 import DarockFoundation
+import SDWebImageSwiftUI
 @_spi(Advanced) import SwiftUIIntrospect
 
 struct NowPlayingView: View {
+    @State private var audioPlayer = AudioPlayer.shared
+    var body: some View {
+        VStack {
+            _NowPlayingHeaderView()
+            _NowPlayingContentView()
+                .mask {
+                    LinearGradient(
+                        colors: [
+                            .black.opacity(0),
+                            .black,
+                            .black,
+                            .black,
+                            .black,
+                            .black,
+                            .black,
+                            .black,
+                            .black,
+                            .black,
+                            .black
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                }
+        }
+        .ignoresSafeArea(edges: .bottom)
+        .environment(\.colorScheme, .dark)
+        .presentationBackground {
+            MeshGradient(
+                width: 3,
+                height: 3,
+                points: [
+                    SIMD2<Float>(0.0, 0.0), SIMD2<Float>(0.5, 0.0), SIMD2<Float>(1.0, 0.0),
+                    SIMD2<Float>(0.0, 0.5), SIMD2<Float>(0.45, 0.55), SIMD2<Float>(1.0, 0.5),
+                    SIMD2<Float>(0.0, 1.0), SIMD2<Float>(0.5, 1.0), SIMD2<Float>(1.0, 1.0)
+                ],
+                colors: audioPlayer.artworkBackgroundColors,
+                background: .init(uiColor: .darkGray),
+                smoothsColors: true
+            )
+            .blur(radius: 10, opaque: true)
+            .overlay {
+                Color.black.opacity(0.5)
+            }
+            .padding(-2)
+        }
+        .introspect(.sheet, on: .iOS(.v26...)) { controller in
+//            controller.perform(NSSelectorFromString("_setAllowsInteractiveDismissWhenFullScreen:"), with: true)
+            controller.detents = [UISheetPresentationController.Detent.value(forKey: "_fullDetent") as! UISheetPresentationController.Detent]
+        }
+    }
+}
+
+struct _NowPlayingHeaderView: View {
+    @AppStorage("AccountToken") private var accountToken = ""
+    @State private var audioPlayer = AudioPlayer.shared
+    var body: some View {
+        VStack(spacing: 15) {
+            Capsule()
+                .fill(Color(UIColor.tertiaryLabel))
+                .frame(width: 64, height: 4)
+                .centerAligned()
+                .allowsHitTesting(false)
+            HStack(spacing: 10) {
+                if let nowPlayingWork = audioPlayer.media?.sourceWork {
+                    WebImage(url: URL(string: nowPlayingWork.mainCoverUrl)) { image in
+                        image.resizable()
+                    } placeholder: {
+                        Rectangle()
+                            .fill(Color.gray)
+                            .redacted(reason: .placeholder)
+                    }
+                    .scaledToFill()
+                    .frame(width: 75, height: 75)
+                    .clipped()
+                    .cornerRadius(12)
+                    VStack(alignment: .leading, spacing: 3) {
+                        MarqueeText(text: nowPlayingWork.title, font: .systemFont(ofSize: 14, weight: .semibold), leftFade: 4, rightFade: 4, startDelay: 4, alignment: .leading)
+                        Menu(nowPlayingWork.vas.map { $0.name }.joined(separator: "/")) {
+                            ForEach(nowPlayingWork.vas, id: \.self) { va in
+                                Button(action: {
+                                    performSearchSubject.send("$va:\(va.name)$")
+                                }, label: {
+                                    Label(va.name, systemImage: "magnifyingglass")
+                                })
+                            }
+                        }
+                        .font(.system(size: 14))
+                        .foregroundStyle(.white)
+                        .opacity(0.6)
+                    }
+                    if !accountToken.isEmpty {
+                        StarButton(isStarred: $audioPlayer.isStarred) {
+                            if !audioPlayer.isStarred {
+                                requestJSON("https://api.asmr.one/api/review", method: .put, parameters: ["work_id": nowPlayingWork.id, "rating": 5, "review_text": nil, "progress": nil], encoding: JSONEncoding.default, headers: globalRequestHeaders) { _, _ in }
+                            } else {
+                                requestJSON("https://api.asmr.one/api/review?work_id=\(nowPlayingWork.id)", method: .delete, headers: globalRequestHeaders) { _, _ in }
+                            }
+                            audioPlayer.isStarred.toggle()
+                        }
+                    }
+                    Menu {
+                        nowPlayingWork.contextActions
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundStyle(.white)
+                            .padding(6)
+                    }
+                    .menuStyle(.button)
+                    .buttonStyle(.bordered)
+                    .buttonBorderShape(.circle)
+                    .padding(.horizontal, -10)
+                }
+            }
+        }
+        .padding()
+        .padding(.horizontal, 15)
+    }
+}
+
+struct _NowPlayingContentView: View {
     @Namespace private var coverScaleNamespace
     @Environment(SceneDelegate.self) private var sceneDelegate
     @State private var audioPlayer = AudioPlayer.shared
@@ -222,7 +346,6 @@ struct NowPlayingView: View {
         .onDisappear {
             UIApplication.shared.isIdleTimerDisabled = false
         }
-        .environment(\.colorScheme, .dark)
         .onReceive(audioPlayer._player.periodicTimePublisher()) { time in
             // Code in this closure runs at nearly each frame, optimizing for speed is important.
             if time.seconds - currentPlaybackTime >= 0.3 || time.seconds < currentPlaybackTime {
