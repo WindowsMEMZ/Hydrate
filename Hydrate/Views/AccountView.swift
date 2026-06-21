@@ -88,14 +88,30 @@ struct AccountView: View {
                     Text("字幕")
                 }
                 Section {
+                    NavigationLink(destination: { StorageManagementView() }) {
+                        HStack {
+                            Text("管理存储空间")
+                            Spacer()
+                            Text(ByteCountFormatter().string(fromByteCount: DownloadManager.shared.contentTotalSize()))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                } header: {
+                    Text("下载")
+                }
+                Section {
                     NavigationLink(destination: { AboutView() }, label: {
                         Label("关于 App", systemImage: "info.circle.fill")
                     })
                 }
             }
             .navigationTitle("账户")
-            .withDismissButton {
-                dismiss()
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("关闭", systemImage: "xmark") {
+                        dismiss()
+                    }
+                }
             }
         }
     }

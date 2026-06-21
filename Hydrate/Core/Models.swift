@@ -101,26 +101,6 @@ struct Work: Identifiable, Equatable, Codable {
                         }
                     }
                 }
-                if let progress = DownloadManager.shared.progress(for: id), progress < 1 {
-                    Button(action: {
-                        DownloadManager.shared.cancelTask(for: id)
-                    }, label: {
-                        Image(_internalSystemName: "stop.circle.open")
-                        Text("停止下载")
-                    })
-                } else if !DownloadManager.shared.isDownloaded(for: id) {
-                    Button("下载", systemImage: "arrow.down.circle") {
-                        requestString("https://api.asmr.one/api/tracks/\(id)?v=1", headers: globalRequestHeaders) { respStr, isSuccess in
-                            if isSuccess, let tracks = getJsonData([TrackStructure].self, from: respStr) {
-                                try? DownloadManager.shared.createTask(for: self, withTracks: tracks)
-                            }
-                        }
-                    }
-                } else {
-                    Button("移除下载", systemImage: "trash", role: .destructive) {
-                        DownloadManager.shared.remove(id: id)
-                    }
-                }
             }
         }
         Section {
@@ -175,7 +155,7 @@ struct Work: Identifiable, Equatable, Codable {
     }
 }
 
-struct TrackStructure: Equatable, Hashable, Codable {
+struct TrackStructure: Codable {
     var type: FileType
     var hash: String?
     var title: String
@@ -186,16 +166,28 @@ struct TrackStructure: Equatable, Hashable, Codable {
     var size: UInt64?
     var children: [TrackStructure]?
     
-    static func ==(lhs: Self, rhs: Self) -> Bool {
-        lhs.type == rhs.type && lhs.hash == rhs.hash && lhs.title == rhs.title && lhs.workTitle == rhs.workTitle && lhs.duration == rhs.duration && lhs.size == rhs.size
-    }
-    
-    enum FileType: String, Codable {
+    enum FileType: String, Codable, StableHashable {
         case folder
         case audio
         case text
         case image
         case other
+    }
+}
+extension TrackStructure: StableHashable {
+    func stableHash(into hasher: inout StableHasher) {
+        hasher.combine(type)
+        hasher.combine(hash)
+        hasher.combine(title)
+        hasher.combine(workTitle)
+        hasher.combine(duration)
+        hasher.combine(size ?? 0)
+        hasher.combine(children)
+    }
+}
+extension TrackStructure: Hashable {
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(stableHashValue)
     }
 }
 extension Array<TrackStructure> {
@@ -309,8 +301,10 @@ struct RecentSearchItem: Identifiable, Hashable, Equatable, Codable {
 }
 
 struct DownloadWorkBundleInfo: Codable {
-    var bundleVersion: Int = 1
+    var bundleVersion: Int = 2
     var work: Work
-    var tracks: [TrackStructure]
+    var allTracks: [TrackStructure]
+    var availableTracks: [Int: TrackStructure]
     var dateCreated: Date
+    var dateModified: Date
 }

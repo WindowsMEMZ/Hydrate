@@ -35,10 +35,11 @@ struct ContentView: View {
                                         isAccountManagementPresented = true
                                     }, label: {
                                         Image(systemName: "person.crop.circle")
-                                            .font(.system(size: 22, weight: .semibold))
+                                            .font(.system(size: 28, weight: .medium))
                                             .foregroundStyle(.accent)
                                     })
                                 }
+                                .sharedBackgroundVisibility(.hidden)
                             }
                     }
                 } label: {
@@ -54,10 +55,11 @@ struct ContentView: View {
                                         isAccountManagementPresented = true
                                     }, label: {
                                         Image(systemName: "person.crop.circle")
-                                            .font(.system(size: 22, weight: .semibold))
+                                            .font(.system(size: 28, weight: .medium))
                                             .foregroundStyle(.accent)
                                     })
                                 }
+                                .sharedBackgroundVisibility(.hidden)
                             }
                     }
                 }
@@ -70,10 +72,11 @@ struct ContentView: View {
                                         isAccountManagementPresented = true
                                     }, label: {
                                         Image(systemName: "person.crop.circle")
-                                            .font(.system(size: 22, weight: .semibold))
+                                            .font(.system(size: 28, weight: .medium))
                                             .foregroundStyle(.accent)
                                     })
                                 }
+                                .sharedBackgroundVisibility(.hidden)
                             }
                     }
                 }
@@ -86,10 +89,11 @@ struct ContentView: View {
                                         isAccountManagementPresented = true
                                     }, label: {
                                         Image(systemName: "person.crop.circle")
-                                            .font(.system(size: 22, weight: .semibold))
+                                            .font(.system(size: 28, weight: .medium))
                                             .foregroundStyle(.accent)
                                     })
                                 }
+                                .sharedBackgroundVisibility(.hidden)
                             }
                     }
                 }

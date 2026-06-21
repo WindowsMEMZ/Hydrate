@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import DarockFoundation
 
 func parseVTT(_ content: String) -> [ClosedRange<Double>: String] {
     var result = [ClosedRange<Double>: String]()
@@ -107,4 +108,46 @@ func parseLRC(_ content: String) -> [ClosedRange<Double>: String] {
     }
     
     return result
+}
+
+func _locateLyricFile(
+    for audioTrack: TrackStructure,
+    in allTracks: [TrackStructure]
+) -> (track: TrackStructure, fileTypeHint: String)? {
+    let allFiles = allTracks.flattened
+    for file in allFiles {
+        if file.title == "\(audioTrack.title).vtt"
+            || file.title == "\(audioTrack.title.dropLast(4)).vtt" {
+            return (file, "vtt")
+        } else if file.title == "\(audioTrack.title).lrc"
+                    || file.title == "\(audioTrack.title.dropLast(4)).lrc" {
+            return (file, "lrc")
+        }
+    }
+    return nil
+}
+
+func parseLyrics(
+    for audioTrack: TrackStructure,
+    in allTracks: [TrackStructure]
+) async -> [ClosedRange<Double>: String]? {
+    guard let (track, fileTypeHint) = _locateLyricFile(
+        for: audioTrack,
+        in: allTracks
+    ) else {
+        return nil
+    }
+    
+    let result = await requestString(track.mediaStreamUrl!)
+    if case let .success(respStr) = result {
+        switch fileTypeHint {
+        case "vtt":
+            return parseVTT(respStr)
+        case "lrc":
+            return parseLRC(respStr)
+        default: return nil
+        }
+    } else {
+        return nil
+    }
 }

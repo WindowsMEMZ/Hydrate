@@ -5,6 +5,7 @@
 //  Created by Mark Chan on 2025/4/30.
 //
 
+import TipKit
 import Combine
 import SwiftUI
 import AVFoundation
@@ -26,6 +27,11 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil
     ) -> Bool {
         try? AVAudioSession.sharedInstance().setCategory(.playback)
+        
+        // Don't say lazy
+        _ = DownloadManager.shared
+        
+        try? Tips.configure()
         
         return true
     }

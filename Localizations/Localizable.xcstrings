@@ -186,6 +186,26 @@
         }
       }
     },
+    "作品" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Works"
+          }
+        }
+      }
+    },
+    "你可以正常使用 Hydrate 或是其他 App，下载会在后台完成。连接到蜂窝网络时，下载将自动暂停直到恢复无线局域网连接。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You can use Hydrate or other apps as you normally would. Downloading will be finished in background and will be paused while using cellular data."
+          }
+        }
+      }
+    },
     "你可能也喜欢" : {
       "localizations" : {
         "en" : {
@@ -207,6 +227,7 @@
       }
     },
     "停止下载" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -222,6 +243,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "About App"
+          }
+        }
+      }
+    },
+    "关闭" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dismiss"
+          }
+        }
+      }
+    },
+    "内容" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contents"
           }
         }
       }
@@ -252,6 +293,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Share Album…"
+          }
+        }
+      }
+    },
+    "取消下载" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel Downloading"
           }
         }
       }
@@ -610,6 +661,16 @@
         }
       }
     },
+    "正在下载内容" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Downloading Contents"
+          }
+        }
+      }
+    },
     "注册" : {
       "localizations" : {
         "en" : {
@@ -703,6 +764,16 @@
     },
     "简体中文" : {
       "shouldTranslate" : false
+    },
+    "管理存储空间" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manage Storage"
+          }
+        }
+      }
     },
     "翻译目标语言" : {
       "localizations" : {

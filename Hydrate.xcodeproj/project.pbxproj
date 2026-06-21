@@ -21,6 +21,9 @@
 		8C39622B2DC2246C00372D10 /* NotifKit in Frameworks */ = {isa = PBXBuildFile; productRef = 8C39622A2DC2246C00372D10 /* NotifKit */; };
 		8C4D05FA2FD959020085611C /* AudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4D05F92FD959000085611C /* AudioPlayer.swift */; };
 		8C9E66062FE2D36F003AD34F /* LyricTranslation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9E66052FE2D367003AD34F /* LyricTranslation.swift */; };
+		8CC1FF582FE438AF00028371 /* StableHasher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC1FF572FE438AF00028371 /* StableHasher.swift */; };
+		8CC1FF5A2FE46D5200028371 /* Tips.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC1FF592FE46D5000028371 /* Tips.swift */; };
+		8CC1FF5C2FE4713600028371 /* StorageManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC1FF5B2FE4713100028371 /* StorageManagementView.swift */; };
 		8CD0E1912DC2266400997186 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD0E1902DC2266200997186 /* HomeView.swift */; };
 		8CD0E1932DC2272800997186 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD0E1922DC2272600997186 /* Models.swift */; };
 		8CD0E1952DC232A300997186 /* WorkDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD0E1942DC2329F00997186 /* WorkDetailView.swift */; };
@@ -57,6 +60,9 @@
 		8C39621D2DC2225600372D10 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		8C4D05F92FD959000085611C /* AudioPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlayer.swift; sourceTree = "<group>"; };
 		8C9E66052FE2D367003AD34F /* LyricTranslation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricTranslation.swift; sourceTree = "<group>"; };
+		8CC1FF572FE438AF00028371 /* StableHasher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StableHasher.swift; sourceTree = "<group>"; };
+		8CC1FF592FE46D5000028371 /* Tips.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tips.swift; sourceTree = "<group>"; };
+		8CC1FF5B2FE4713100028371 /* StorageManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageManagementView.swift; sourceTree = "<group>"; };
 		8CD0E1902DC2266200997186 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		8CD0E1922DC2272600997186 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		8CD0E1942DC2329F00997186 /* WorkDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkDetailView.swift; sourceTree = "<group>"; };
@@ -149,6 +155,7 @@
 		8C9E66032FE2D2F4003AD34F /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				8CC1FF592FE46D5000028371 /* Tips.swift */,
 				8CD0E1922DC2272600997186 /* Models.swift */,
 				8CD0E1D62DC33EEA00997186 /* Combine.swift */,
 				8CD0E1D02DC325F900997186 /* GlobalProperties.swift */,
@@ -174,6 +181,7 @@
 				8CD0E1942DC2329F00997186 /* WorkDetailView.swift */,
 				8CD0E19C2DC2446E00997186 /* NowPlayingView.swift */,
 				8CD0E1DF2DC45C3400997186 /* AboutView.swift */,
+				8CC1FF5B2FE4713100028371 /* StorageManagementView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -186,6 +194,7 @@
 				8CD0E1C82DC26DA200997186 /* MarqueeText.swift */,
 				8CE4D67D2F31B11C004757C6 /* ColorThief.swift */,
 				8CEF72E12FDAB9C000EE37B5 /* EnvironmentReader.swift */,
+				8CC1FF572FE438AF00028371 /* StableHasher.swift */,
 				8CD0E1D42DC33A2700997186 /* String+.swift */,
 				8CD0E1A12DC24ADA00997186 /* ClosedRange+.swift */,
 				8CD0E19F2DC245FF00997186 /* AVPlayer+PeriodicTimePublisher.swift */,
@@ -282,9 +291,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8CC1FF5A2FE46D5200028371 /* Tips.swift in Sources */,
 				8CD0E1D32DC3286100997186 /* StarButton.swift in Sources */,
 				8CD0E19D2DC2447600997186 /* NowPlayingView.swift in Sources */,
 				8CD0E1DD2DC3B07400997186 /* UIRepresentable.swift in Sources */,
+				8CC1FF582FE438AF00028371 /* StableHasher.swift in Sources */,
 				8CD0E1A72DC24F6000997186 /* LyricParsers.swift in Sources */,
 				8CD0E1952DC232A300997186 /* WorkDetailView.swift in Sources */,
 				8CD0E1D12DC325FD00997186 /* GlobalProperties.swift in Sources */,
@@ -299,6 +310,7 @@
 				8C0E54BF2DC46B2400FE6B5B /* DownloadManager.swift in Sources */,
 				8CD0E1D52DC33A2900997186 /* String+.swift in Sources */,
 				8CD0E1C92DC26DA200997186 /* MarqueeText.swift in Sources */,
+				8CC1FF5C2FE4713600028371 /* StorageManagementView.swift in Sources */,
 				8CEF72E42FDAE5A500EE37B5 /* LyricsTranscriber.swift in Sources */,
 				8CD0E1D72DC33EEC00997186 /* Combine.swift in Sources */,
 				8C9E66062FE2D36F003AD34F /* LyricTranslation.swift in Sources */,

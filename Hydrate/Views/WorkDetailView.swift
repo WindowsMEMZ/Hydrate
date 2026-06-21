@@ -5,6 +5,7 @@
 //  Created by Mark Chan on 2025/4/30.
 //
 
+import TipKit
 import SwiftUI
 import DarockUI
 import NotifKit
@@ -27,13 +28,11 @@ struct WorkDetailView: View {
     @State private var textFilePresentationContent: String?
     @State private var imageFileURLPresentation: String?
     @State private var workTitleHeight: CGFloat = 0
-    @State private var scrollObservation: NSKeyValueObservation?
     @State private var isShowingNavigationTitle = false
     @State private var moreWorksByAuthor = [(String, [Work])]()
     @State private var relatedWorks = [Work]()
-    @State private var isDownloaded = false
-    @State private var downloadProgress: Double?
-    @State private var individualDownloadProgresses: [TrackStructure: Double]?
+    @State private var downloadedTracks: [TrackStructure] = []
+    @State private var downloadProgresses: [TrackStructure: Double] = [:]
     @State private var downloadProgressUpdateTimer: Timer?
     var body: some View {
         ScrollView {
@@ -108,27 +107,12 @@ struct WorkDetailView: View {
                             case .audio:
                                 Button(action: {
                                     Task {
-                                        var lyrics: [ClosedRange<Double>: String]?
-                                        let allFiles = tracks.flattened
-                                        for file in allFiles {
-                                            if file.title == "\(track.title).vtt" || file.title == "\(track.title.dropLast(4)).vtt" {
-                                                let result = await requestString(file.mediaStreamUrl!)
-                                                if case let .success(respStr) = result {
-                                                    lyrics = parseVTT(respStr)
-                                                }
-                                                break
-                                            } else if file.title == "\(track.title).lrc" || file.title == "\(track.title.dropLast(4)).lrc" {
-                                                let result = await requestString(file.mediaStreamUrl!)
-                                                if case let .success(respStr) = result {
-                                                    lyrics = parseLRC(respStr)
-                                                }
-                                                break
-                                            }
-                                        }
+                                        let lyrics = await parseLyrics(for: track, in: tracks)
+                                        let playURL = DownloadManager.shared.contentURL(track: track, of: work)?.absoluteString ?? track.mediaStreamUrl!
                                         AudioPlayer.shared.media = .init(
                                             sourceWork: work,
                                             sourceTracks: tracks,
-                                            playURL: track.mediaStreamUrl!,
+                                            playURL: playURL,
                                             playFileName: String(track.title.dropLast(4)),
                                             lyrics: lyrics
                                         )
@@ -136,79 +120,28 @@ struct WorkDetailView: View {
                                 }, label: {
                                     HStack {
                                         Label(track.title, systemImage: "music.quarternote.3")
-                                        if !isDownloaded,
-                                           let _progress = downloadProgress,
-                                           _progress < 1,
-                                           let individualDownloadProgresses,
-                                           let progress = individualDownloadProgresses[track] {
-                                            Spacer()
-                                            if progress < 1 {
-                                                Gauge(value: progress, label: {})
-                                                    .gaugeStyle(.accessoryCircularCapacity)
-                                                    .tint(.accentColor)
-                                                    .scaleEffect(0.3)
-                                                    .frame(width: 20, height: 20)
-                                                    .animation(.smooth, value: progress)
-                                            } else {
-                                                Image(systemName: "checkmark.circle.fill")
-                                                    .font(.system(size: 16))
-                                                    .foregroundStyle(.gray)
-                                            }
-                                        }
+                                        Spacer()
+                                        trackTrailingArena(for: track)
                                     }
                                 })
                             case .text:
                                 Button(action: {
-                                    textFileURLPresentation = track.mediaStreamUrl!
+                                    textFileURLPresentation = DownloadManager.shared.contentURL(track: track, of: work)?.absoluteString ?? track.mediaStreamUrl!
                                 }, label: {
                                     HStack {
                                         Label(track.title, systemImage: "text.document")
-                                        if !isDownloaded,
-                                           let _progress = downloadProgress,
-                                           _progress < 1,
-                                           let individualDownloadProgresses,
-                                           let progress = individualDownloadProgresses[track] {
-                                            Spacer()
-                                            if progress < 1 {
-                                                Gauge(value: progress, label: {})
-                                                    .gaugeStyle(.accessoryCircularCapacity)
-                                                    .tint(.accentColor)
-                                                    .scaleEffect(0.3)
-                                                    .frame(width: 20, height: 20)
-                                                    .animation(.smooth, value: progress)
-                                            } else {
-                                                Image(systemName: "checkmark.circle.fill")
-                                                    .font(.system(size: 16))
-                                                    .foregroundStyle(.gray)
-                                            }
-                                        }
+                                        Spacer()
+                                        trackTrailingArena(for: track)
                                     }
                                 })
                             case .image:
                                 Button(action: {
-                                    imageFileURLPresentation = track.mediaStreamUrl!
+                                    imageFileURLPresentation = DownloadManager.shared.contentURL(track: track, of: work)?.absoluteString ?? track.mediaStreamUrl!
                                 }, label: {
                                     HStack {
                                         Label(track.title, systemImage: "photo")
-                                        if !isDownloaded,
-                                           let _progress = downloadProgress,
-                                           _progress < 1,
-                                           let individualDownloadProgresses,
-                                           let progress = individualDownloadProgresses[track] {
-                                            Spacer()
-                                            if progress < 1 {
-                                                Gauge(value: progress, label: {})
-                                                    .gaugeStyle(.accessoryCircularCapacity)
-                                                    .tint(.accentColor)
-                                                    .scaleEffect(0.3)
-                                                    .frame(width: 20, height: 20)
-                                                    .animation(.smooth, value: progress)
-                                            } else {
-                                                Image(systemName: "checkmark.circle.fill")
-                                                    .font(.system(size: 16))
-                                                    .foregroundStyle(.gray)
-                                            }
-                                        }
+                                        Spacer()
+                                        trackTrailingArena(for: track)
                                     }
                                 })
                             case .other:
@@ -216,25 +149,8 @@ struct WorkDetailView: View {
                                     Link(destination: URL(string: url)!) {
                                         HStack {
                                             Label(track.title, systemImage: "document")
-                                            if !isDownloaded,
-                                               let _progress = downloadProgress,
-                                               _progress < 1,
-                                               let individualDownloadProgresses,
-                                               let progress = individualDownloadProgresses[track] {
-                                                Spacer()
-                                                if progress < 1 {
-                                                    Gauge(value: progress, label: {})
-                                                        .gaugeStyle(.accessoryCircularCapacity)
-                                                        .tint(.accentColor)
-                                                        .scaleEffect(0.3)
-                                                        .frame(width: 20, height: 20)
-                                                        .animation(.smooth, value: progress)
-                                                } else {
-                                                    Image(systemName: "checkmark.circle.fill")
-                                                        .font(.system(size: 16))
-                                                        .foregroundStyle(.gray)
-                                                }
-                                            }
+                                            Spacer()
+                                            trackTrailingArena(for: track)
                                         }
                                     }
                                 }
@@ -399,59 +315,16 @@ struct WorkDetailView: View {
                     .controlSize(.large)
             }
         }
-        .introspect(.scrollView, on: .iOS(.v18...)) { scrollView in
-            scrollObservation = scrollView.observe(\.contentOffset, options: .new) { _, value in
-                let scrollOffset = value.newValue ?? .init()
-                isShowingNavigationTitle = scrollOffset.y - workTitleHeight > 170
-            }
+        .onScrollGeometryChange(for: Bool.self) { geometry in
+            geometry.contentOffset.y - workTitleHeight > 170
+        } action: { _, newValue in
+            isShowingNavigationTitle = newValue
         }
         .navigationTitle(isShowingNavigationTitle ? (work?.title ?? "") : "")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             if let work {
                 ToolbarItemGroup(placement: .topBarTrailing) {
-                    if let tracks {
-                        if !isDownloaded {
-                            Button(action: {
-                                if downloadProgress == nil {
-                                    try? DownloadManager.shared.createTask(for: work, withTracks: tracks)
-                                    trackDownloadProgressUpdate()
-                                } else {
-                                    DownloadManager.shared.cancelTask(for: work.id)
-                                }
-                            }, label: {
-                                if let downloadProgress {
-                                    ZStack {
-                                        Gauge(value: downloadProgress, label: {})
-                                            .gaugeStyle(.accessoryCircularCapacity)
-                                            .tint(.accentColor)
-                                            .scaleEffect(0.5)
-                                            .animation(.smooth, value: downloadProgress)
-                                        Image(systemName: "stop.fill")
-                                            .font(.system(size: 12))
-                                    }
-                                    .frame(width: 16, height: 16)
-                                } else {
-                                    Image(systemName: "arrow.down")
-                                        .font(.system(size: 14, weight: .bold))
-                                }
-                            })
-                        } else {
-                            Menu {
-                                Button("移除下载", systemImage: "trash", role: .destructive) {
-                                    DownloadManager.shared.remove(id: work.id)
-                                    isDownloaded = false
-                                    downloadProgress = nil
-                                    loadWorkInfo()
-                                    loadTrackInfo()
-                                }
-                            } label: {
-                                Image(systemName: "checkmark")
-                                    .font(.system(size: 14, weight: .bold))
-                            }
-                            .menuStyle(.button)
-                        }
-                    }
                     Menu {
                         work.contextActions
                     } label: {
@@ -480,10 +353,12 @@ struct WorkDetailView: View {
                     textFileURLPresentation = nil
                 }
             }
-            .task {
-                let result = await requestString(url)
-                if case let .success(respStr) = result {
-                    textFilePresentationContent = respStr
+            .onAppear {
+                Task {
+                    let result = await requestString(url)
+                    if case let .success(respStr) = result {
+                        textFilePresentationContent = respStr
+                    }
                 }
             }
             .onDisappear {
@@ -523,47 +398,97 @@ struct WorkDetailView: View {
         }
         .onAppear {
             loadWorkInfo()
-            loadTrackInfo()
         }
         .onDisappear {
             downloadProgressUpdateTimer?.invalidate()
         }
     }
     
-    func trackDownloadProgressUpdate() {
-        downloadProgressUpdateTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
-            let newProgress = DownloadManager.shared.progress(for: id)
-            if _slowPath(newProgress == 1 || (downloadProgress != nil && newProgress == nil)) {
-                downloadProgressUpdateTimer?.invalidate()
-                if newProgress == 1 {
-                    isDownloaded = true
-                    loadWorkInfo()
-                    loadTrackInfo()
+    @ViewBuilder
+    func trackTrailingArena(for track: TrackStructure) -> some View {
+        if let work, let tracks {
+            HStack {
+                if isTrackDownloaded(track) {
+                    Image(systemName: "arrow.down.circle.fill")
+                        .foregroundStyle(.secondary)
+                } else if let progress = downloadProgresses[track] {
+                    Gauge(value: progress, label: {})
+                        .gaugeStyle(.accessoryCircularCapacity)
+                        .tint(.accentColor)
+                        .scaleEffect(0.3)
+                        .frame(width: 20, height: 20)
+                        .animation(.smooth, value: progress)
+                        .popoverTip(TrackDownloadingTip(), arrowEdge: .top)
                 }
+                Menu {
+                    if !isTrackDownloaded(track) {
+                        Button("下载", systemImage: "arrow.down.circle") {
+                            DownloadManager.shared.download(track: track, of: work, allTracks: tracks)
+                            trackDownloadProgressUpdate()
+                        }
+                    } else if let id = DownloadManager.shared.downloadingTracks.first(where: { $0.0 == track })?.1 {
+                        Button("取消下载", systemImage: "xmark.circle") {
+                            DownloadManager.shared.cancelTask(for: id)
+                            updateDownloadedTracks()
+                        }
+                    } else {
+                        Button("移除下载", systemImage: "xmark.circle") {
+                            DownloadManager.shared.remove(track: track, of: work)
+                            updateDownloadedTracks()
+                        }
+                    }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .foregroundStyle(Color.secondary)
+                        .padding(5)
+                }
+                .contentShape(Rectangle())
             }
-            downloadProgress = newProgress
-            if let tracks {
-                individualDownloadProgresses = DownloadManager.shared.individualProgress(for: id, withTracks: tracks)
+        }
+    }
+    
+    func trackDownloadProgressUpdate() {
+        downloadProgressUpdateTimer?.invalidate()
+        downloadProgressUpdateTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
+            guard let tracks = tracks?.flattened else { return }
+            
+            updateDownloadedTracks()
+            
+            let downloadingTracks = DownloadManager.shared.downloadingTracks
+                .filter { tracks.contains($0.0) }
+            if downloadingTracks.isEmpty {
+                downloadProgressUpdateTimer?.invalidate()
+            }
+            
+            downloadProgresses = downloadingTracks.reduce(into: [:]) { partialResult, _info in
+                let (track, taskID) = _info
+                if let progress = DownloadManager.shared.progress(for: taskID) {
+                    partialResult.updateValue(progress, forKey: track)
+                }
             }
         }
     }
     
     func loadWorkInfo() {
         Task {
-            isDownloaded = DownloadManager.shared.isDownloaded(for: id)
-            if !isDownloaded {
+            updateDownloadedTracks()
+            if let downloadedBundle = DownloadManager.shared.bundleInfo(of: id) {
+                work = downloadedBundle.work
+                tracks = downloadedBundle.allTracks
+            } else {
+                requestString("https://api.asmr.one/api/tracks/\(id)?v=1", headers: globalRequestHeaders) { respStr, isSuccess in
+                    if isSuccess {
+                        tracks = getJsonData([TrackStructure].self, from: respStr) ?? nil
+                    }
+                }
+                
                 let result = await requestString("https://api.asmr.one/api/work/\(id)", headers: globalRequestHeaders)
                 if case let .success(respStr) = result {
                     work = getJsonData(Work.self, from: respStr) ?? nil
                 }
-            } else {
-                work = DownloadManager.shared.work(of: id)
             }
             if let work {
-                downloadProgress = DownloadManager.shared.progress(for: work.id)
-                if let progress = downloadProgress, progress < 1 {
-                    trackDownloadProgressUpdate()
-                }
+                trackDownloadProgressUpdate()
                 Task {
                     moreWorksByAuthor.removeAll()
                     for va in work.vas {
@@ -580,6 +505,7 @@ struct WorkDetailView: View {
                         relatedWorks = getJsonData([Work].self, from: respJson["works"].rawString()!) ?? []
                     }
                 }
+                
                 var recentWorks = [Work]()
                 if let _recentData = try? Data(contentsOf: URL(filePath: NSHomeDirectory() + "/Documents/Recents.plist")),
                    let recents = try? PropertyListDecoder().decode([Work].self, from: _recentData) {
@@ -601,16 +527,15 @@ struct WorkDetailView: View {
             }
         }
     }
-    func loadTrackInfo() {
-        isDownloaded = DownloadManager.shared.isDownloaded(for: id)
-        if !isDownloaded {
-            requestString("https://api.asmr.one/api/tracks/\(id)?v=1", headers: globalRequestHeaders) { respStr, isSuccess in
-                if isSuccess {
-                    tracks = getJsonData([TrackStructure].self, from: respStr) ?? nil
-                }
-            }
+    func updateDownloadedTracks() {
+        if let downloadedBundle = DownloadManager.shared.bundleInfo(of: id) {
+            downloadedTracks = Array(downloadedBundle.availableTracks.values)
         } else {
-            tracks = DownloadManager.shared.tracks(of: id)
+            downloadedTracks = []
         }
+    }
+    
+    func isTrackDownloaded(_ track: TrackStructure) -> Bool {
+        downloadedTracks.contains(where: { $0.stableHashValue == track.stableHashValue })
     }
 }

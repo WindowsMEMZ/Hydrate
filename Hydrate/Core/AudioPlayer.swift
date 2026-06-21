@@ -175,7 +175,14 @@ final class AudioPlayer: MediaSessionRepresentable {
         guard let media else { return }
         
         let mediaURL = URL(string: media.playURL)!
-        let newItem = AVPlayerItem(url: mediaURL)
+        var _urlAssetOptions: [String: Any]?
+        if media.playURL.hasSuffix(".data") {
+            _urlAssetOptions = [
+                AVURLAssetOverrideMIMETypeKey: "audio/mpeg"
+            ]
+        }
+        let asset = AVURLAsset(url: mediaURL, options: _urlAssetOptions)
+        let newItem = AVPlayerItem(asset: asset)
         _player.replaceCurrentItem(with: newItem)
         if !media.preventAutoPlaying {
             try? AVAudioSession.sharedInstance().setActive(true)
