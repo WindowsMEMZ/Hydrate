@@ -161,7 +161,7 @@ struct WorkDetailView: View {
                         .scrollDisabled(true)
                         .frame(height: trackListHeight)
                         .padding(.horizontal, -16)
-                        .introspect(.list, on: .iOS(.v18...)) { tableView in
+                        .introspect(.list, on: .iOS(.v26...)) { tableView in
                             trackListHeightObservation = tableView.observe(\.contentSize) { _, _ in
                                 trackListHeight = tableView.contentSize.height
                             }
@@ -425,7 +425,6 @@ struct WorkDetailView: View {
                     if !isTrackDownloaded(track) {
                         Button("下载", systemImage: "arrow.down.circle") {
                             DownloadManager.shared.download(track: track, of: work, allTracks: tracks)
-                            trackDownloadProgressUpdate()
                         }
                     } else if let id = DownloadManager.shared.downloadingTracks.first(where: { $0.0 == track })?.1 {
                         Button("取消下载", systemImage: "xmark.circle") {
@@ -457,10 +456,6 @@ struct WorkDetailView: View {
             
             let downloadingTracks = DownloadManager.shared.downloadingTracks
                 .filter { tracks.contains($0.0) }
-            if downloadingTracks.isEmpty {
-                downloadProgressUpdateTimer?.invalidate()
-            }
-            
             downloadProgresses = downloadingTracks.reduce(into: [:]) { partialResult, _info in
                 let (track, taskID) = _info
                 if let progress = DownloadManager.shared.progress(for: taskID) {

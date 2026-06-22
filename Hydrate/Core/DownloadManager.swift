@@ -52,6 +52,7 @@ final class DownloadManager: NSObject {
     private var taskTable: [Int: DownloadMetadata] = [:]
     @AppStorage("DownloadSubtitleWithAudio")
         private var downloadSubtitleWithAudio = true
+    @AppStorage("AudioTypePreferNoSE") private var audioTypePreferNoSE = false
     
     var downloadingTracks: [(TrackStructure, Int)] {
         taskTable.map { key, value in
@@ -145,6 +146,131 @@ final class DownloadManager: NSObject {
         
         return task.taskIdentifier
     }
+    func downloadAll(_ tracks: [TrackStructure], of work: Work) {
+        var audioTypes: [AudioType] = []
+        if let _data = try? Data(contentsOf: URL(
+            filePath: NSHomeDirectory()
+                + "/Documents/AudioTypePreferences.plist"
+        )), let types = try? PropertyListDecoder().decode(
+            [AudioType].self,
+            from: _data
+        ) {
+            var allTypes = AudioType.allCases
+            for type in types {
+                if let index = allTypes.firstIndex(of: type) {
+                    audioTypes.append(type)
+                    allTypes.remove(at: index)
+                }
+            }
+            audioTypes.append(contentsOf: allTypes)
+        } else {
+            audioTypes = AudioType.allCases
+        }
+        
+        var flattenTracks = tracks.flattened.sorted { $0.title < $1.title }
+        if audioTypePreferNoSE {
+            let matchRequirements = [
+                ["no", "cut", "无", "無", "なし", "less", "カット"],
+                ["se", "效果音", "音效", "効果音"]
+            ]
+            for track in flattenTracks where track.type == .folder {
+                let weakTitle = track.title.lowercased()
+                if matchRequirements.allSatisfy({
+                    $0.contains(where: { weakTitle.contains($0) })
+                }) {
+                    flattenTracks = [track].flattened.sorted {
+                        $0.title < $1.title
+                    }
+                    break
+                }
+            }
+        }
+        var targetFolder: TrackStructure!
+        var candidates: [TrackStructure] = [] // folder only
+        for track in flattenTracks where track.type == .folder {
+            if let children = track.children {
+                let flattened = children.flattened
+                if flattened.contains(where: { $0.type == .audio })
+                    && flattened.allSatisfy({
+                        [.folder, .text, .audio].contains($0.type)
+                    }) {
+                    candidates.append(track)
+                }
+            }
+        }
+        if candidates.isEmpty {
+            os_log(.fault, """
+            Cannot find any audio-only folder for downloading all audio \
+            of work '\(work.title)'
+            """)
+            return
+        }
+        if candidates.count == 1 {
+            targetFolder = candidates[0]
+        } else {
+            for type in audioTypes {
+                var typeFilteredCandidates: [TrackStructure] = []
+                for candidate in candidates {
+                    if candidate.children!.flattened.filter({
+                        $0.type == .audio
+                    }).allSatisfy({
+                        $0.title.hasSuffix(".\(type.rawValue)")
+                    }) {
+                        typeFilteredCandidates.append(candidate)
+                    }
+                }
+                if !typeFilteredCandidates.isEmpty {
+                    if typeFilteredCandidates.count == 1 {
+                        targetFolder = typeFilteredCandidates[0]
+                    } else {
+                        targetFolder = typeFilteredCandidates.max {
+                            $0.children!.flattened.reduce(into: 0) {
+                                $0 += $1.size ?? 0
+                            } < $1.children!.flattened.reduce(into: 0) {
+                                $0 += $1.size ?? 0
+                            }
+                        }
+                    }
+                    break
+                }
+            }
+            if targetFolder == nil {
+                // Candidates may all have mixed audio types,
+                // we have to extract user preferred files manually
+                for type in audioTypes {
+                    for candidate in candidates {
+                        let audioFiles = candidate.children!.flattened
+                            .filter({
+                                $0.type == .audio
+                                && $0.title.hasSuffix(".\(type.rawValue)")
+                            })
+                        if !audioFiles.isEmpty {
+                            targetFolder = .init(
+                                type: .folder,
+                                title: UUID().uuidString,
+                                children: audioFiles
+                            )
+                            break
+                        }
+                    }
+                }
+                if targetFolder == nil {
+                    os_log(.fault, """
+                    Cannot determine the right audio files to download
+                    for work '\(work.title)'
+                    """)
+                    return
+                }
+            }
+        }
+        
+        for child in targetFolder.children!.flattened {
+            if child.type == .audio
+                && !isDownloaded(track: child, ofWorkID: work.id) {
+                download(track: child, of: work, allTracks: tracks)
+            }
+        }
+    }
     func cancelTask(for id: Int) {
         taskTable[id]?.task.cancel()
         taskTable.removeValue(forKey: id)
@@ -164,6 +290,12 @@ final class DownloadManager: NSObject {
     func isDownloaded(workID id: Int) -> Bool {
         FileManager.default.fileExists(
             atPath: NSHomeDirectory() + "/Documents/Downloads/WK\(id).bundle"
+        )
+    }
+    func isDownloaded(track: TrackStructure, ofWorkID workID: Int) -> Bool {
+        FileManager.default.fileExists(
+            atPath: NSHomeDirectory()
+            + "/Documents/Downloads/WK\(workID).bundle/\(track.stableHashValue).data"
         )
     }
     func remove(track: TrackStructure, of work: Work) {
@@ -195,6 +327,13 @@ final class DownloadManager: NSObject {
                     try? FileManager.default.removeItem(atPath: bundlePath)
                 }
             }
+        }
+    }
+    func removeAllTracks(of work: Work) {
+        let bundlePath = NSHomeDirectory()
+            + "/Documents/Downloads/WK\(work.id).bundle"
+        if FileManager.default.fileExists(atPath: bundlePath) {
+            try? FileManager.default.removeItem(atPath: bundlePath)
         }
     }
     func bundleInfo(of id: Int) -> DownloadWorkBundleInfo? {

@@ -95,6 +95,10 @@ struct AccountView: View {
                 }
                 Section {
                     Toggle("下载音频时自动下载字幕文件", isOn: $downloadSubtitleWithAudio)
+                    NavigationLink("音频类型偏好") {
+                        AudioTypePreferencesView()
+                            .navigationBarTitleDisplayMode(.inline)
+                    }
                     NavigationLink(destination: { StorageManagementView() }) {
                         HStack {
                             Text("管理存储空间")

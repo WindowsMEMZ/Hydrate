@@ -94,3 +94,14 @@ class SceneDelegate: NSObject, UIWindowSceneDelegate {
         return view
     }()
 }
+extension Set<UIScene> {
+    var activeWindowScene: UIWindowScene? {
+        for scene in self {
+            if let scene = scene as? UIWindowScene,
+               scene.activationState == .foregroundActive {
+                return scene
+            }
+        }
+        return nil
+    }
+}

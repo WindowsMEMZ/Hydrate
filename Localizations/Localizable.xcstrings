@@ -156,8 +156,35 @@
         }
       }
     },
+    "下载作品中的全部音频时，仅下载最符合偏好的一组音频。靠前的文件类型优先级更高。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When downloading all audio of a work, only the set of audio that best matches your preferences will be downloaded. File types listed earlier in this list will have higher priority."
+          }
+        }
+      }
+    },
+    "下载全部音频" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Download All Audio"
+          }
+        }
+      }
+    },
     "下载音频时自动下载字幕文件" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Download Subtitle Files with Audio"
+          }
+        }
+      }
     },
     "专属精选推荐" : {
       "localizations" : {
@@ -185,6 +212,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Undo Favorite"
+          }
+        }
+      }
+    },
+    "优先无效果音" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prefer Audio without Sound Effect"
           }
         }
       }
@@ -613,6 +650,26 @@
         }
       }
     },
+    "效果音" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sound Effect"
+          }
+        }
+      }
+    },
+    "文件类型" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "File Type"
+          }
+        }
+      }
+    },
     "文本" : {
       "localizations" : {
         "en" : {
@@ -744,6 +801,16 @@
         }
       }
     },
+    "确认" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirm"
+          }
+        }
+      }
+    },
     "确认密码" : {
       "localizations" : {
         "en" : {
@@ -760,6 +827,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Remove Download"
+          }
+        }
+      }
+    },
+    "移除全部音频" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove All Audio"
           }
         }
       }
@@ -884,6 +961,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Works, Voice Actors, Tags, and More"
+          }
+        }
+      }
+    },
+    "音频类型偏好" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Audio Type Preference"
           }
         }
       }

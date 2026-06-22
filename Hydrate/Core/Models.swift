@@ -6,10 +6,6 @@
 //
 
 import SwiftUI
-import NotifKit
-import Alamofire
-import DarockFoundation
-import SDWebImageSwiftUI
 
 struct Pagination: Decodable {
     var currentPage: Int
@@ -49,66 +45,10 @@ struct Work: Identifiable, Equatable, Codable {
     var mainCoverUrl: String
     
     var previewView: some View {
-        VStack(alignment: .leading) {
-            WebImage(url: URL(string: self.mainCoverUrl)) { image in
-                image.resizable()
-            } placeholder: {
-                Rectangle()
-                    .fill(Color.gray)
-                    .redacted(reason: .placeholder)
-            }
-            .scaledToFill()
-            .frame(width: UIScreen.main.bounds.width - 100, height: UIScreen.main.bounds.width - 100)
-            .clipped()
-            .cornerRadius(8)
-            .padding(.horizontal)
-            .padding(.vertical, 5)
-            Group {
-                Text(self.title)
-                    .font(.system(size: 16, weight: .semibold))
-                Text(self.vas.map { $0.name }.joined(separator: "/"))
-                    .foregroundStyle(.gray)
-                Spacer()
-                    .frame(height: 3)
-                Text(self.tags.map(\.name).joined(separator: " · "))
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.gray)
-            }
-            .padding(.horizontal)
-        }
-        .frame(width: UIScreen.main.bounds.width - 70, height: UIScreen.main.bounds.width + 40)
+        _WorkPreviewView(work: self)
     }
-    @ViewBuilder
     var contextActions: some View {
-        Section {
-            if !(UserDefaults.standard.string(forKey: "AccountToken") ?? "").isEmpty {
-                if self.userRating != nil {
-                    Button("从收藏中移除", systemImage: "trash", role: .destructive) {
-                        requestJSON("https://api.asmr.one/api/review?work_id=\(self.id)", method: .delete, headers: globalRequestHeaders) { _, isSuccess in
-                            if !isSuccess {
-                                NKTipper.automaticStyle.present(text: "移除时出错", symbol: "xmark.circle.fill")
-                            }
-                        }
-                    }
-                } else {
-                    Button("收藏", systemImage: "star") {
-                        requestJSON("https://api.asmr.one/api/review", method: .put, parameters: ["work_id": self.id, "rating": 5, "review_text": nil, "progress": nil], encoding: JSONEncoding.default, headers: globalRequestHeaders) { _, isSuccess in
-                            if isSuccess {
-                                NKTipper.automaticStyle.present(text: "已添加到收藏", symbol: "checkmark.circle.fill")
-                            } else {
-                                NKTipper.automaticStyle.present(text: "收藏时出错", symbol: "xmark.circle.fill")
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        Section {
-            Link(destination: URL(string: "https://www.asmr.one/work/\(self.source_id)")!) {
-                Label("在浏览器中打开", systemImage: "safari")
-            }
-            ShareLink("分享作品...", item: URL(string: "https://www.asmr.one/work/\(self.source_id)")!)
-        }
+        _WorkContextActions(work: self)
     }
     
     static func ==(lhs: Self, rhs: Self) -> Bool {
@@ -365,4 +305,13 @@ struct DownloadWorkBundleInfo: Codable {
     var availableTracks: [Int: TrackStructure]
     var dateCreated: Date
     var dateModified: Date
+}
+
+enum AudioType: String, CaseIterable, Hashable, Codable {
+    case mp3
+    case flac
+    case wav
+    case opus
+    case m4a
+    case aac
 }
