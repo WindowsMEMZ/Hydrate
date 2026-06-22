@@ -102,8 +102,9 @@ struct ContentView: View {
                     }
                 }
             }
+            .tabBarMinimizeBehavior(.onScrollDown)
             .tabViewBottomAccessory {
-                nowPlayingView
+                nowPlayingAccessoryView
             }
             .onReceive(performSearchSubject) { text in
                 if tabSelection != 3 {
@@ -119,10 +120,10 @@ struct ContentView: View {
         .sheet(isPresented: $isAccountManagementPresented, content: { AccountView() })
     }
     
-    var nowPlayingView: some View {
+    var nowPlayingAccessoryView: some View {
         HStack {
-            if let nowPlayingWork = audioPlayer.media?.sourceWork {
-                WebImage(url: URL(string: nowPlayingWork.samCoverUrl)) { image in
+            if let media = audioPlayer.media {
+                WebImage(url: URL(string: media.sourceWork.samCoverUrl)) { image in
                     image.resizable()
                 } placeholder: {
                     Rectangle()
@@ -132,10 +133,16 @@ struct ContentView: View {
                 .scaledToFill()
                 .frame(width: 35, height: 35)
                 .clipped()
-                .cornerRadius(10)
-                Text(nowPlayingWork.title)
-                    .font(.system(size: 14, weight: .semibold))
-                    .lineLimit(1)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(media.sourceWork.title)
+                        .font(.system(size: 13, weight: .semibold))
+                        .marquee(trailingFade: 10)
+                    Text(media.currentTrack.title)
+                        .font(.system(size: 11))
+                        .marquee(trailingFade: 10)
+                }
+                .lineLimit(1)
                 Spacer()
                 Button(action: {
                     if audioPlayer.isPlaying {
@@ -150,7 +157,12 @@ struct ContentView: View {
                 .buttonStyle(ControlButtonStyle())
                 .frame(width: 40, height: 40)
             } else {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color.gray)
+                    .frame(width: 35, height: 35)
+                    .redacted(reason: .placeholder)
                 Text("未在播放")
+                    .font(.system(size: 14, weight: .semibold))
                 Spacer()
             }
         }

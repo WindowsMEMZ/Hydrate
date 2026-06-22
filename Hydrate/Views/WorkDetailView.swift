@@ -112,6 +112,7 @@ struct WorkDetailView: View {
                                         AudioPlayer.shared.media = .init(
                                             sourceWork: work,
                                             sourceTracks: tracks,
+                                            currentTrack: track,
                                             playURL: playURL,
                                             playFileName: String(track.title.dropLast(4)),
                                             lyrics: lyrics

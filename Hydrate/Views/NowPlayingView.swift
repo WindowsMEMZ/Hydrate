@@ -96,8 +96,10 @@ struct _NowPlayingHeaderView: View {
                     .clipped()
                     .cornerRadius(12)
                     VStack(alignment: .leading, spacing: 3) {
-                        MarqueeText(text: nowPlayingWork.title, font: .systemFont(ofSize: 14, weight: .semibold), leftFade: 4, rightFade: 4, startDelay: 4, alignment: .leading)
-                        Menu(nowPlayingWork.vas.map { $0.name }.joined(separator: "/")) {
+                        Text(nowPlayingWork.title)
+                            .font(.system(size: 14, weight: .semibold))
+                            .marquee()
+                        Menu {
                             ForEach(nowPlayingWork.vas, id: \.self) { va in
                                 Button(action: {
                                     performSearchSubject.send("$va:\(va.name)$")
@@ -106,10 +108,13 @@ struct _NowPlayingHeaderView: View {
                                     Label(va.name, systemImage: "magnifyingglass")
                                 })
                             }
+                        } label: {
+                            Text(nowPlayingWork.vas.map { $0.name }.joined(separator: "/"))
+                                .font(.system(size: 14))
+                                .foregroundStyle(.white)
+                                .opacity(0.6)
+                                .marquee()
                         }
-                        .font(.system(size: 14))
-                        .foregroundStyle(.white)
-                        .opacity(0.6)
                     }
                     if !accountToken.isEmpty {
                         StarButton(isStarred: $audioPlayer.isStarred) {

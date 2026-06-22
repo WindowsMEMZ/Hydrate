@@ -206,10 +206,34 @@ extension Array<TrackStructure> {
 struct NowPlayingInfo: Codable {
     var sourceWork: Work
     var sourceTracks: [TrackStructure]
+    var currentTrack: TrackStructure
     var playURL: String
     var playFileName: String
     var lyrics: [ClosedRange<Double>: String]?
     var preventAutoPlaying: Bool = false
+}
+extension NowPlayingInfo {
+    static var persistent: Self? {
+        let decoder = PropertyListDecoder()
+        if let _data = try? Data(contentsOf: URL(
+            filePath: NSHomeDirectory() + "/Documents/LatestNowPlaying.plist"
+        )), var latestNowPlaying = try? decoder.decode(Self.self, from: _data) {
+            latestNowPlaying.preventAutoPlaying = true
+            return latestNowPlaying
+        } else {
+            return nil
+        }
+    }
+    
+    func makePersistent() {
+        let encoder = PropertyListEncoder()
+        encoder.outputFormat = .binary
+        if let data = try? encoder.encode(self) {
+            try? data.write(to: URL(
+                filePath: NSHomeDirectory() + "/Documents/LatestNowPlaying.plist"
+            ))
+        }
+    }
 }
 
 enum SearchToken: Identifiable, Hashable, Codable {

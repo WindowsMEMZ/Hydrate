@@ -34,11 +34,7 @@ final class AudioPlayer: MediaSessionRepresentable {
     private var isNetworkConstrained = false
     
     init() {
-        if let _latestNowPlaying = try? String(contentsOfFile: NSHomeDirectory() + "/Documents/LatestNowPlaying.json", encoding: .utf8),
-           var latestNowPlaying = getJsonData(NowPlayingInfo.self, from: _latestNowPlaying) {
-            latestNowPlaying.preventAutoPlaying = true
-            self.media = latestNowPlaying
-        }
+        self.media = .persistent
         
         _player.publisher(for: \.timeControlStatus).sink { [weak self] status in
             self?.timeControlStatusDidUpdate(status)
@@ -233,13 +229,7 @@ final class AudioPlayer: MediaSessionRepresentable {
             }
         }
         
-        if let jsonData = jsonString(from: media) {
-            try? jsonData.write(
-                toFile: NSHomeDirectory() + "/Documents/LatestNowPlaying.json",
-                atomically: true,
-                encoding: .utf8
-            )
-        }
+        media.makePersistent()
     }
     private func timeControlStatusDidUpdate(_ status: AVPlayer.TimeControlStatus) {
         switch status {
