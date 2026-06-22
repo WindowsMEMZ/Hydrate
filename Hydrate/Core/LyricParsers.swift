@@ -136,12 +136,14 @@ func _locateLyricFile(
 
 func parseLyrics(
     for audioTrack: TrackStructure,
-    in allTracks: [TrackStructure]
+    in allTracks: [TrackStructure],
+    of work: Work
 ) async -> [ClosedRange<Double>: String]? {
     guard let (track, fileTypeHint) = _locateLyricFile(
         for: audioTrack,
         in: allTracks
-    ), let url = URL(string: track.mediaStreamUrl ?? "") else {
+    ), let url = DownloadManager.shared.contentURL(track: audioTrack, of: work)
+            ?? URL(string: track.mediaStreamUrl ?? "") else {
         return nil
     }
     guard let (data, _) = try? await URLSession.shared.data(from: url) else {

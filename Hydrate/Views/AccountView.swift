@@ -21,6 +21,7 @@ struct AccountView: View {
     @AppStorage("TranscriptionTranslationEnabled") private var transcriptionTranslationEnabled = false
     @AppStorage("TranscriptionTranslationTarget") private var transcriptionTranslationTarget = ""
     @AppStorage("BlurContentInAppSwitcher") private var blurContentInAppSwitcher = false
+    @AppStorage("DownloadSubtitleWithAudio") private var downloadSubtitleWithAudio = true
     var body: some View {
         NavigationStack {
             List {
@@ -65,8 +66,7 @@ struct AccountView: View {
                         .onChange(of: autoTranscribeEnabled) {
                             if autoTranscribeEnabled {
                                 Task {
-                                    print(try? await LyricsTranscriber.ensureAssets())
-                                    print("Success")
+                                    try? await LyricsTranscriber.ensureAssets()
                                 }
                             }
                         }
@@ -94,6 +94,7 @@ struct AccountView: View {
                     Text("字幕")
                 }
                 Section {
+                    Toggle("下载音频时自动下载字幕文件", isOn: $downloadSubtitleWithAudio)
                     NavigationLink(destination: { StorageManagementView() }) {
                         HStack {
                             Text("管理存储空间")

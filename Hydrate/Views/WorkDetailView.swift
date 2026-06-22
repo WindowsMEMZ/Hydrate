@@ -107,7 +107,7 @@ struct WorkDetailView: View {
                             case .audio:
                                 Button(action: {
                                     Task {
-                                        let lyrics = await parseLyrics(for: track, in: tracks)
+                                        let lyrics = await parseLyrics(for: track, in: tracks, of: work)
                                         let playURL = DownloadManager.shared.contentURL(track: track, of: work)?.absoluteString ?? track.mediaStreamUrl!
                                         AudioPlayer.shared.media = .init(
                                             sourceWork: work,

@@ -7,6 +7,7 @@
 
 import OSLog
 import UIKit
+import SwiftUI
 import Foundation
 
 final class DownloadManager: NSObject {
@@ -49,6 +50,8 @@ final class DownloadManager: NSObject {
     }
     
     private var taskTable: [Int: DownloadMetadata] = [:]
+    @AppStorage("DownloadSubtitleWithAudio")
+        private var downloadSubtitleWithAudio = true
     
     var downloadingTracks: [(TrackStructure, Int)] {
         taskTable.map { key, value in
@@ -82,6 +85,9 @@ final class DownloadManager: NSObject {
         // Metadata can be fetched quickly
         Task {
             guard !hasMetadata(ofWorkID: work.id) else { return }
+            guard !taskTable.values.contains(where: { $0.work == work }) else {
+                return
+            }
             await withTaskGroup { group in
                 group.addTask {
                     if let url = URL(string: work.mainCoverUrl) {
@@ -130,6 +136,11 @@ final class DownloadManager: NSObject {
                     try? data.write(to: destination)
                 }
             }
+        }
+        
+        if downloadSubtitleWithAudio && track.type == .audio,
+           let (fileTrack, _) = _locateLyricFile(for: track, in: allTracks) {
+            download(track: fileTrack, of: work, allTracks: allTracks)
         }
         
         return task.taskIdentifier
