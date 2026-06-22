@@ -306,6 +306,10 @@ struct _NowPlayingContentView: View {
                                 .animation(.easeOut(duration: 0.2), value: isVolumeDraging)
                                 HStack {
                                     Spacer()
+                                    Rectangle()
+                                        .fill(Color.clear)
+                                        .frame(width: 35, height: 35)
+                                    Spacer()
                                     GenericUIViewRepresentable(view: {
                                         let view = AVRoutePickerView()
                                         view.tintColor = UIColor(white: 1, alpha: 0.6)
@@ -313,6 +317,33 @@ struct _NowPlayingContentView: View {
                                         return view
                                     }())
                                     .frame(width: 50, height: 50)
+                                    Spacer()
+                                    Button {
+                                        var transaction = Transaction()
+                                        transaction.disablesAnimations = true
+                                        withTransaction(transaction) {
+                                            if audioPlayer.repeatMode == .off {
+                                                audioPlayer.repeatMode = .one
+                                            } else {
+                                                audioPlayer.repeatMode = .off
+                                            }
+                                        }
+                                        resetMenuDismissTimer()
+                                    } label: {
+                                        if audioPlayer.repeatMode == .off {
+                                            Image(systemName: "repeat.1")
+                                                .foregroundStyle(.white.opacity(0.6))
+                                        } else {
+                                            Circle()
+                                                .fill(.white.opacity(0.6))
+                                                .inversedMask {
+                                                    Image(systemName: "repeat.1")
+                                                }
+                                        }
+                                    }
+                                    .buttonStyle(.plain)
+                                    .font(.system(size: 20))
+                                    .frame(width: 35, height: 35)
                                     Spacer()
                                 }
                             }

@@ -22,7 +22,7 @@ final class AudioPlayer: MediaSessionRepresentable {
     
     let id: String = UUID().uuidString
     
-    let _player: AVPlayer = .init()
+    let _player: AVQueuePlayer = .init()
     var media: NowPlayingInfo? {
         didSet {
             mediaDidUpdate()
@@ -33,8 +33,19 @@ final class AudioPlayer: MediaSessionRepresentable {
     private let _networkPathMonitor = NWPathMonitor()
     private var isNetworkConstrained = false
     
+    var repeatMode: MediaCommand.RepeatMode {
+        didSet {
+            repeatModeDidUpdate()
+        }
+    }
+    
     init() {
         self.media = .persistent
+        
+        self.repeatMode = .init(
+            rawValue: UserDefaults.standard.integer(forKey: "PlayerRepeatMode")
+        ) ?? .off
+        mediaDidUpdate()
         
         _player.publisher(for: \.timeControlStatus).sink { [weak self] status in
             self?.timeControlStatusDidUpdate(status)
@@ -62,6 +73,7 @@ final class AudioPlayer: MediaSessionRepresentable {
     private var _playbackStateUpdateDate = Date.now
     var elapsedTime: TimeInterval = 0
     private var mediaSession: MediaSession<AudioPlayer>?
+    private var looper: AVPlayerLooper?
     
     @ObservationIgnored
     @AppStorage("AutoTranscribeEnabled") private var autoTranscribeEnabled = false
@@ -111,6 +123,12 @@ final class AudioPlayer: MediaSessionRepresentable {
                 toleranceBefore: .zero,
                 toleranceAfter: .zero
             )
+        },
+        .changeRepeatMode(
+            current: repeatMode,
+            supported: [.off, .one]
+        ) { [unowned self] mode in
+            repeatMode = mode
         }
     ]}
     
@@ -180,6 +198,7 @@ final class AudioPlayer: MediaSessionRepresentable {
         let asset = AVURLAsset(url: mediaURL, options: _urlAssetOptions)
         let newItem = AVPlayerItem(asset: asset)
         _player.replaceCurrentItem(with: newItem)
+        repeatModeDidUpdate(newItem)
         if !media.preventAutoPlaying {
             try? AVAudioSession.sharedInstance().setActive(true)
             self.play()
@@ -242,6 +261,26 @@ final class AudioPlayer: MediaSessionRepresentable {
         @unknown default: break
         }
         elapsedTime = currentTime
+    }
+    private func repeatModeDidUpdate(_ newItem: AVPlayerItem? = nil) {
+        UserDefaults.standard.set(
+            repeatMode.rawValue,
+            forKey: "PlayerRepeatMode"
+        )
+        
+        looper?.disableLooping()
+        looper = nil
+        
+        guard let newItem = newItem ?? _player.currentItem else { return }
+        switch repeatMode {
+        case .off:
+            break
+        case .one:
+            looper = .init(player: _player, templateItem: newItem)
+        case .all:
+            os_log(.fault, "Unsupported media repeat mode: all")
+        @unknown default: return
+        }
     }
     
     private func _updateTranscription(
@@ -309,6 +348,26 @@ extension Array<AudioPlayer.Transcription> {
             }
         } else {
             return nil
+        }
+    }
+}
+
+extension MediaCommand.RepeatMode: @retroactive RawRepresentable {
+    public init?(rawValue: Int) {
+        switch rawValue {
+        case 0: self = .off
+        case 1: self = .one
+        case 2: self = .all
+        default: return nil
+        }
+    }
+    
+    public var rawValue: Int {
+        switch self {
+        case .off: 0
+        case .one: 1
+        case .all: 2
+        @unknown default: -1
         }
     }
 }
