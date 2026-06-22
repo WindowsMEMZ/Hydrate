@@ -19,6 +19,7 @@
 		8C3962252DC2244400372D10 /* DarockFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 8C3962242DC2244400372D10 /* DarockFoundation */; };
 		8C3962282DC2244D00372D10 /* DarockUI in Frameworks */ = {isa = PBXBuildFile; productRef = 8C3962272DC2244D00372D10 /* DarockUI */; };
 		8C39622B2DC2246C00372D10 /* NotifKit in Frameworks */ = {isa = PBXBuildFile; productRef = 8C39622A2DC2246C00372D10 /* NotifKit */; };
+		8C43EA702FE9270A00065C74 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 8C43EA6F2FE9270A00065C74 /* AppIcon.icon */; };
 		8C4D05FA2FD959020085611C /* AudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4D05F92FD959000085611C /* AudioPlayer.swift */; };
 		8C9E66062FE2D36F003AD34F /* LyricTranslation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9E66052FE2D367003AD34F /* LyricTranslation.swift */; };
 		8CC1FF582FE438AF00028371 /* StableHasher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC1FF572FE438AF00028371 /* StableHasher.swift */; };
@@ -57,6 +58,7 @@
 		8C39621B2DC2225600372D10 /* ASMROneApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASMROneApp.swift; sourceTree = "<group>"; };
 		8C39621C2DC2225600372D10 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		8C39621D2DC2225600372D10 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		8C43EA6F2FE9270A00065C74 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; name = AppIcon.icon; path = Artwork/AppIcon.icon; sourceTree = "<group>"; };
 		8C4D05F92FD959000085611C /* AudioPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlayer.swift; sourceTree = "<group>"; };
 		8C9E66052FE2D367003AD34F /* LyricTranslation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricTranslation.swift; sourceTree = "<group>"; };
 		8CC1FF572FE438AF00028371 /* StableHasher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StableHasher.swift; sourceTree = "<group>"; };
@@ -122,6 +124,7 @@
 			isa = PBXGroup;
 			children = (
 				8CD0E1DE2DC3DF5400997186 /* README.md */,
+				8C43EA6F2FE9270A00065C74 /* AppIcon.icon */,
 				8C0E54F82DC4E13700FE6B5B /* Localizations */,
 				8C39621E2DC2225600372D10 /* Hydrate */,
 				8C0E55082DC4EDCF00FE6B5B /* Frameworks */,
@@ -275,6 +278,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				8C0E54FA2DC4E14800FE6B5B /* Localizable.xcstrings in Resources */,
+				8C43EA702FE9270A00065C74 /* AppIcon.icon in Resources */,
 				8C0E55042DC4E19A00FE6B5B /* InfoPlist.strings in Resources */,
 				8C3962222DC2225600372D10 /* Assets.xcassets in Resources */,
 			);
