@@ -1,0 +1,15 @@
+{
+  "applinks": {
+      "details": [
+           {
+                "appIDs": ["B57D8PP775.com.memz233.ASMROne"],
+                "components": [
+                    {
+                        "/": "/redirect",
+                        "?": "dst"
+                    }
+                ]
+           }
+       ]
+   }
+}

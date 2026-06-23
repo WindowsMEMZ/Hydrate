@@ -142,7 +142,7 @@ func parseLyrics(
     guard let (track, fileTypeHint) = _locateLyricFile(
         for: audioTrack,
         in: allTracks
-    ), let url = DownloadManager.shared.contentURL(track: audioTrack, of: work)
+    ), let url = DownloadManager.shared.contentURL(track: track, of: work)
             ?? URL(string: track.mediaStreamUrl ?? "") else {
         return nil
     }

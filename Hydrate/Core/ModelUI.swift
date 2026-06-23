@@ -117,7 +117,11 @@ struct _WorkContextActions: View {
             Link(destination: URL(string: "https://www.asmr.one/work/\(work.source_id)")!) {
                 Label("在浏览器中打开", systemImage: "safari")
             }
-            ShareLink("分享作品...", item: URL(string: "https://www.asmr.one/work/\(work.source_id)")!)
+            if let media = AudioPlayer.shared.media, media.sourceWork == work {
+                ShareLink("分享作品...", item: media, preview: media.sharePreview)
+            } else {
+                ShareLink("分享作品...", item: URL(string: "https://www.asmr.one/work/\(work.source_id)")!)
+            }
         }
     }
     

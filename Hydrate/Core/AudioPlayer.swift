@@ -14,6 +14,7 @@ import Foundation
 import NowPlaying
 import Translation
 import AVFoundation
+import GroupActivities
 import DarockFoundation
 
 @Observable
@@ -81,6 +82,18 @@ final class AudioPlayer: MediaSessionRepresentable {
     @AppStorage("TranscriptionTranslationEnabled") private var transcriptionTranslationEnabled = false
     private var transcribingTask: Task<Void, Never>?
     var transcriptions: [Transcription]?
+    
+    private var groupSessionSubscriptions: [AnyCancellable] = []
+    private var groupSessionSinkActivitiesTask: Task<Void, Never>?
+    private var groupSession: GroupSession<NowPlayingInfo>? {
+        didSet {
+            if let session = groupSession {
+                _player.playbackCoordinator.coordinateWithSession(session)
+            } else {
+                pause()
+            }
+        }
+    }
     
     var content: (any MediaContentRepresentable)? {
         guard let media else { return nil }
@@ -185,6 +198,9 @@ final class AudioPlayer: MediaSessionRepresentable {
         transcribingTask?.cancel()
         transcribingTask = nil
         transcriptions = nil
+        groupSessionSinkActivitiesTask?.cancel()
+        groupSessionSubscriptions.removeAll()
+        groupSession = nil
         
         guard let media else { return }
         
@@ -200,8 +216,10 @@ final class AudioPlayer: MediaSessionRepresentable {
         _player.replaceCurrentItem(with: newItem)
         repeatModeDidUpdate(newItem)
         if !media.preventAutoPlaying {
-            try? AVAudioSession.sharedInstance().setActive(true)
-            self.play()
+            Task {
+                _ = try? await AVAudioSession.sharedInstance().activate()
+                self.play()
+            }
         }
         
         audioDuration = nil
@@ -244,6 +262,31 @@ final class AudioPlayer: MediaSessionRepresentable {
                     }
                 } catch {
                     os_log(.fault, "Transcriber was interrupted with error: \(error)")
+                }
+            }
+        }
+        
+        groupSessionSinkActivitiesTask = Task { [weak self] in
+            if case .activationPreferred = await media.prepareForActivation(),
+               (try? await media.activate()) == true {
+                for await session in type(of: media).sessions() {
+                    guard !Task.isCancelled, let self else { return }
+                    
+                    self.groupSession = session
+                    
+                    self.groupSessionSubscriptions.removeAll()
+                    session.$state.sink { state in
+                        if case .invalidated = state {
+                            self.groupSession = nil
+                            self.groupSessionSubscriptions.removeAll()
+                        }
+                    }.store(in: &self.groupSessionSubscriptions)
+                    
+                    session.join()
+                    
+                    session.$activity.sink { activity in
+                        self.media = activity
+                    }.store(in: &self.groupSessionSubscriptions)
                 }
             }
         }
@@ -305,6 +348,7 @@ final class AudioPlayer: MediaSessionRepresentable {
                     Task {
                         let session = TranslationSession(installedSource: .init(identifier: "ja"), target: nil)
                         if let result = try? await session.translate(last.string) {
+                            guard count == transcriptions?.count else { return }
                             last.translation = result.targetText
                             transcriptions?[count - 1] = last
                         }

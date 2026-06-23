@@ -222,6 +222,8 @@ final class LyricsTranscriber {
             var audioBufferStream = AsyncStream.makeStream(
                 of: AnalyzerInput.self
             )
+            
+            let fileStreamLock = NSLock()
         }
         let procedureDataPtr = UnsafeMutablePointer<ProcedureData>
             .allocate(capacity: 1)
@@ -361,7 +363,9 @@ final class LyricsTranscriber {
         )
         defer {
             if let id = procedureDataPtr.pointee.audioFileStream {
-                AudioFileStreamClose(id)
+                _ = procedureDataPtr.pointee.fileStreamLock.withLock {
+                    AudioFileStreamClose(id)
+                }
             }
         }
         
@@ -376,12 +380,15 @@ final class LyricsTranscriber {
                 
                 data.withUnsafeBytes { ptr in
                     if let baseAddr = ptr.baseAddress {
-                        let result = AudioFileStreamParseBytes(
-                            fileStream,
-                            UInt32(data.count),
-                            baseAddr,
-                            []
-                        )
+                        let result = procedureDataPtr.pointee.fileStreamLock
+                            .withLock {
+                                AudioFileStreamParseBytes(
+                                    fileStream,
+                                    UInt32(data.count),
+                                    baseAddr,
+                                    []
+                                )
+                            }
                         if _slowPath(result != noErr) {
                             os_log(.fault, """
                             Audio file stream failed to parse bytes \

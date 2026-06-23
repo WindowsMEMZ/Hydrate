@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="author" content="WindowsMEMZ" />
+    <meta name="viewport" content="width=device-width initial-scale=1" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Hydrate" />
+    <meta property="og:site_name" content="Hydrate" />
+    <meta property="og:title" content="Hydrate" />
+    <meta property="og:url" content="https://hydrate.memz.top" />
+    <style>
+        body {
+            font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;
+            font-size: 17px;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        ul, ol, li, dl, dt, dd, h1, h2, h3, h4, h5, h6, hgroup, p, blockquote, figure, form, fieldset, input, legend, pre, abbr {
+            margin: 0;
+            padding: 0;
+        }
+
+        main {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-color: #fff;
+        }
+
+        .navigation {
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 9999;
+            line-height: initial;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(20px);
+            border-bottom: linear-gradient( 0deg, #f6b391 0%, #f8ce6e 92% );
+            box-shadow: rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 1px 2px 0px;
+        }
+        .navigation .wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1234px;
+            padding: 10px 20px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <section style="position: relative; background-color: #dc8cff; padding: 160px 0; text-align: center; display: block;">
+            <div style="max-width: 980px; width: 100%; margin: 0 auto; box-sizing: border-box; padding-bottom: 20px; position: relative; z-index: 2;">
+                <h1 style="font-size: 44px; line-height: 1.2; text-align: center; color: rgb(61, 61, 61);">Hydrate Link</h1>
+            </div>
+            <p>
+                <a href="" id="hydrate-open" style="z-index: 5; position: relative; display: inline-block; line-height: 1.2; font-size: 35px; color: #fff; letter-spacing: 0; font-weight: 400; text-decoration: none; padding: 15px 81px; background-image: linear-gradient(to bottom right, #4489fe, #2466d8); border-radius: 43px; white-space: nowrap; cursor: pointer;">Open in Hydrate</a>
+            </p>
+            <p>
+                <a href="" id="asmrone-open" style="z-index: 5; position: relative; display: inline-block; line-height: 1.2; font-size: 35px; color: #2466d8; letter-spacing: 0; font-weight: 500; text-decoration: none; padding: 15px 81px; border-radius: 43px; white-space: nowrap; cursor: pointer;">Open in ASMROne</a>
+            </p>
+        </section>
+    </main>
+    <script>
+        const queryString = window.location.search;
+        const urlParams = new URLSearchParams(queryString);
+        const encodedDestination = urlParams.get('dst').replace("{slash}", "/");
+        const workID = window.atob(encodedDestination)
+        const hydrateLink = "hydrate://work/" + workID;
+        const asmroneLink = "https://asmr.one/work/" + workID;
+        document.getElementById('hydrate-open').href = hydrateLink;
+        document.getElementById('asmrone-open').href = asmroneLink;
+    </script>
+</body>
+</html>
