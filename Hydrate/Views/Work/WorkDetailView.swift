@@ -16,15 +16,12 @@ import SDWebImageSwiftUI
 
 struct WorkDetailView: View {
     var id: Int
-    @Namespace private var authorMoreWorkNavigationNamespace
-    @Namespace private var ralatedWorkNavigationNamespace
+    @Environment(\.colorScheme) private var colorScheme
     @AppStorage("AccountToken") private var accountToken = ""
     @AppStorage("RecentWorkPreservingCount") private var recentWorkPreservingCount = 10
     @State private var work: Work?
     @State private var tracks: [TrackStructure]?
-    @State private var trackListHeightObservation: NSKeyValueObservation?
-    @State private var trackListHeight: CGFloat = 1
-    @State private var presentingFileTrack: TrackStructure?
+    @State private var mainColor: (light: Color, dark: Color)?
     @State private var workTitleHeight: CGFloat = 0
     @State private var isShowingNavigationTitle = false
     @State private var moreWorksByAuthor = [(String, [Work])]()
@@ -42,6 +39,10 @@ struct WorkDetailView: View {
                         Rectangle()
                             .fill(Color.gray)
                             .redacted(reason: .placeholder)
+                    }
+                    .onSuccess { image, _, _ in
+                        guard mainColor == nil else { return }
+                        updateMainColor(from: image)
                     }
                     .scaledToFill()
                     .frame(width: 220, height: 220)
@@ -94,63 +95,13 @@ struct WorkDetailView: View {
                         Text(work.tags.map(\.name).joined(separator: " · "))
                             .font(.system(size: 11, weight: .semibold))
                             .multilineTextAlignment(.center)
-                            .foregroundStyle(.gray)
+                            .foregroundStyle(Color.primary)
+                            .opacity(0.7)
                     }
                     .padding([.bottom, .horizontal])
                     if let tracks {
-                        List(tracks, id: \.self, children: \.children) { track in
-                            switch track.type {
-                            case .folder:
-                                Label(track.title, systemImage: "folder")
-                            case .audio:
-                                Button(action: {
-                                    Task {
-                                        let lyrics = await parseLyrics(for: track, in: tracks, of: work)
-                                        let playURL = DownloadManager.shared.contentURL(track: track, of: work)?.absoluteString ?? track.mediaStreamUrl!
-                                        AudioPlayer.shared.media = .init(
-                                            sourceWork: work,
-                                            sourceTracks: tracks,
-                                            currentTrack: track,
-                                            playURL: playURL,
-                                            playFileName: String(track.title.dropLast(4)),
-                                            lyrics: lyrics
-                                        )
-                                    }
-                                }, label: {
-                                    HStack {
-                                        Label(track.title, systemImage: "music.quarternote.3")
-                                        Spacer()
-                                        trackTrailingArena(for: track)
-                                    }
-                                })
-                            default:
-                                Button {
-                                    presentingFileTrack = track
-                                } label: {
-                                    HStack {
-                                        Label(track.title, systemImage: {
-                                            switch track.type {
-                                            case .text: "text.document"
-                                            case .image: "photo"
-                                            default: "document"
-                                            }
-                                        }())
-                                        Spacer()
-                                        trackTrailingArena(for: track)
-                                    }
-                                }
-                            }
-                        }
-                        .listStyle(.plain)
-                        .scrollDisabled(true)
-                        .frame(height: trackListHeight)
-                        .padding(.horizontal, -16)
-                        .introspect(.list, on: .iOS(.v26...)) { tableView in
-                            if trackListHeightObservation == nil {
-                                trackListHeightObservation = tableView.observe(\.contentSize) { _, _ in
-                                    trackListHeight = tableView.contentSize.height
-                                }
-                            }
+                        TrackListView(tracks: tracks, work: work) { track in
+                            trackTrailingArena(for: track)
                         }
                     } else {
                         ProgressView()
@@ -183,120 +134,37 @@ struct WorkDetailView: View {
                             }
                         }
                         .font(.system(size: 14))
-                        .foregroundStyle(.gray)
+                        .opacity(0.7)
                         Spacer()
                     }
                     .padding(.vertical)
-                    if !relatedWorks.isEmpty {
-                        VStack(alignment: .leading) {
-                            if !moreWorksByAuthor.isEmpty {
-                                ForEach(moreWorksByAuthor, id: \.0) { metadata in
+                    if hasBottomInfoArea {
+                        VStack(alignment: .leading, spacing: 30) {
+                            ForEach(moreWorksByAuthor, id: \.0) { metadata in
+                                VStack(alignment: .leading) {
                                     Text("更多\(metadata.0)的作品")
                                         .font(.system(size: 22, weight: .bold))
-                                        .padding(.horizontal)
-                                    ScrollView(.horizontal) {
-                                        LazyHStack(spacing: 0) {
-                                            ForEach(metadata.1) { work in
-                                                NavigationLink {
-                                                    WorkDetailView(id: work.id)
-                                                        .navigationTransition(.zoom(sourceID: work.id, in: ralatedWorkNavigationNamespace))
-                                                } label: {
-                                                    VStack(alignment: .leading) {
-                                                        WebImage(url: URL(string: work.mainCoverUrl)) { image in
-                                                            image.resizable()
-                                                        } placeholder: {
-                                                            Rectangle()
-                                                                .fill(Color.gray)
-                                                                .redacted(reason: .placeholder)
-                                                        }
-                                                        .scaledToFill()
-                                                        .frame(width: 150, height: 150)
-                                                        .clipped()
-                                                        .cornerRadius(7)
-                                                        .matchedTransitionSource(id: work.id, in: ralatedWorkNavigationNamespace)
-                                                        Text(work.title)
-                                                            .font(.system(size: 12, weight: .medium))
-                                                            .lineLimit(1)
-                                                            .foregroundStyle(Color.primary)
-                                                        Text(work.vas.map { $0.name }.joined(separator: "/"))
-                                                            .font(.system(size: 12))
-                                                            .lineLimit(1)
-                                                            .foregroundStyle(.gray)
-                                                    }
-                                                    .frame(width: 160)
-                                                }
-                                                .contextMenu {
-                                                    work.contextActions
-                                                } preview: {
-                                                    work.previewView
-                                                }
-                                            }
-                                        }
-                                        .scrollTargetLayout()
-                                        .scrollTransition { content, _ in
-                                            content.offset(x: 14)
-                                        }
-                                    }
-                                    .scrollIndicators(.never)
-                                    .scrollTargetBehavior(.viewAligned)
+                                    WorkListView(works: metadata.1)
                                 }
                             }
-                            Text("你可能也喜欢")
-                                .font(.system(size: 22, weight: .bold))
-                                .padding(.horizontal)
-                            ScrollView(.horizontal) {
-                                LazyHStack(spacing: 0) {
-                                    ForEach(relatedWorks) { work in
-                                        NavigationLink {
-                                            WorkDetailView(id: work.id)
-                                                .navigationTransition(.zoom(sourceID: work.id, in: ralatedWorkNavigationNamespace))
-                                        } label: {
-                                            VStack(alignment: .leading) {
-                                                WebImage(url: URL(string: work.mainCoverUrl)) { image in
-                                                    image.resizable()
-                                                } placeholder: {
-                                                    Rectangle()
-                                                        .fill(Color.gray)
-                                                        .redacted(reason: .placeholder)
-                                                }
-                                                .scaledToFill()
-                                                .frame(width: 150, height: 150)
-                                                .clipped()
-                                                .cornerRadius(7)
-                                                .matchedTransitionSource(id: work.id, in: ralatedWorkNavigationNamespace)
-                                                Text(work.title)
-                                                    .font(.system(size: 12, weight: .medium))
-                                                    .lineLimit(1)
-                                                    .foregroundStyle(Color.primary)
-                                                Text(work.vas.map { $0.name }.joined(separator: "/"))
-                                                    .font(.system(size: 12))
-                                                    .lineLimit(1)
-                                                    .foregroundStyle(.gray)
-                                            }
-                                            .frame(width: 160)
-                                        }
-                                        .contextMenu {
-                                            work.contextActions
-                                        } preview: {
-                                            work.previewView
-                                        }
-                                    }
-                                }
-                                .scrollTargetLayout()
-                                .scrollTransition { content, _ in
-                                    content.offset(x: 14)
+                            if !relatedWorks.isEmpty {
+                                VStack(alignment: .leading) {
+                                    Text("你可能也喜欢")
+                                        .font(.system(size: 22, weight: .bold))
+                                    WorkListView(works: relatedWorks)
                                 }
                             }
-                            .scrollIndicators(.never)
-                            .scrollTargetBehavior(.viewAligned)
                         }
                         .padding(.vertical)
-                        .background(Color(UIColor.secondarySystemBackground))
-                        .padding(.horizontal, -16)
+                        .background {
+                            Rectangle()
+                                .fill(secondaryBackgroundColor)
+                                .padding(.horizontal, -16)
+                                .padding(.bottom, -500)
+                        }
                     }
                 }
                 .padding()
-                .padding(.bottom, 60)
             } else {
                 ProgressView()
                     .controlSize(.large)
@@ -307,6 +175,7 @@ struct WorkDetailView: View {
         } action: { _, newValue in
             isShowingNavigationTitle = newValue
         }
+        .containerBackground(backgroundColor, for: .navigation)
         .navigationTitle(isShowingNavigationTitle ? (work?.title ?? "") : "")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -323,14 +192,10 @@ struct WorkDetailView: View {
                 }
             }
         }
-        .sheet(item: $presentingFileTrack) { track in
-            if let work {
-                NavigationStack {
-                    FileTrackContentView(track: track, work: work)
-                }
-            }
-        }
         .onAppear {
+            trackDownloadProgressUpdate()
+        }
+        .onInitialAppear {
             loadWorkInfo()
         }
         .onDisappear {
@@ -338,12 +203,39 @@ struct WorkDetailView: View {
         }
     }
     
+    private var hasBottomInfoArea: Bool {
+        !moreWorksByAuthor.isEmpty || !relatedWorks.isEmpty
+    }
+    
+    private var backgroundColor: Color {
+        (colorScheme == .dark ? mainColor?.dark : mainColor?.light)
+            ?? Color(uiColor: .systemBackground)
+    }
+    private var secondaryBackgroundColor: Color {
+        let resolved = backgroundColor.resolve(in: .init())
+        var hue: CGFloat = 0,
+            saturation: CGFloat = 0,
+            brightness: CGFloat = 0
+        UIColor(cgColor: resolved.cgColor).getHue(
+            &hue,
+            saturation: &saturation,
+            brightness: &brightness,
+            alpha: nil
+        )
+        return Color(
+            hue: hue,
+            saturation: saturation,
+            brightness: max(brightness - 0.05, 0)
+        )
+    }
+    
     @ViewBuilder
-    func trackTrailingArena(for track: TrackStructure) -> some View {
+    private func trackTrailingArena(for track: TrackStructure) -> some View {
         if let work, let tracks {
             HStack {
                 if isTrackDownloaded(track) {
                     Image(systemName: "arrow.down.circle.fill")
+                        .font(.system(size: 13))
                         .foregroundStyle(.secondary)
                 } else if let progress = downloadProgresses[track] {
                     Gauge(value: progress, label: {})
@@ -380,7 +272,43 @@ struct WorkDetailView: View {
         }
     }
     
-    func trackDownloadProgressUpdate() {
+    private func updateMainColor(from image: PlatformImage) {
+        if let colors = ColorThief.getPalette(from: image, colorCount: 16),
+           !colors.isEmpty {
+            func compare(_ lhs: MMCQ.Color, rhs: MMCQ.Color) -> Bool {
+                var brightness1: CGFloat = 0
+                var brightness2: CGFloat = 0
+                lhs.makePlatformNativeColor().getHue(
+                    nil,
+                    saturation: nil,
+                    brightness: &brightness1,
+                    alpha: nil
+                )
+                rhs.makePlatformNativeColor().getHue(
+                    nil,
+                    saturation: nil,
+                    brightness: &brightness2,
+                    alpha: nil
+                )
+                return brightness1 < brightness2
+            }
+            
+            let lightColor = colors.max {
+                compare($0, rhs: $1)
+            }!.makePlatformNativeColor()
+            let darkColor = colors.min {
+                compare($0, rhs: $1)
+            }!.makePlatformNativeColor()
+            DispatchQueue.main.async {
+                mainColor = (
+                    Color(uiColor: lightColor),
+                    Color(uiColor: darkColor)
+                )
+            }
+        }
+    }
+    
+    private func trackDownloadProgressUpdate() {
         downloadProgressUpdateTimer?.invalidate()
         downloadProgressUpdateTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
             guard let tracks = tracks?.flattened else { return }
@@ -398,7 +326,7 @@ struct WorkDetailView: View {
         }
     }
     
-    func loadWorkInfo() {
+    private func loadWorkInfo() {
         Task {
             updateDownloadedTracks()
             if let downloadedBundle = DownloadManager.shared.bundleInfo(of: id) {
@@ -417,7 +345,6 @@ struct WorkDetailView: View {
                 }
             }
             if let work {
-                trackDownloadProgressUpdate()
                 Task {
                     moreWorksByAuthor.removeAll()
                     for va in work.vas {
@@ -456,7 +383,7 @@ struct WorkDetailView: View {
             }
         }
     }
-    func updateDownloadedTracks() {
+    private func updateDownloadedTracks() {
         if let downloadedBundle = DownloadManager.shared.bundleInfo(of: id) {
             downloadedTracks = Array(downloadedBundle.availableTracks.values)
         } else {
@@ -464,7 +391,7 @@ struct WorkDetailView: View {
         }
     }
     
-    func isTrackDownloaded(_ track: TrackStructure) -> Bool {
+    private func isTrackDownloaded(_ track: TrackStructure) -> Bool {
         downloadedTracks.contains(where: { $0.stableHashValue == track.stableHashValue })
     }
 }

@@ -94,6 +94,7 @@ struct WorkListView: View {
                 .scrollTransition { content, _ in
                     content.offset(x: 14)
                 }
+                .padding(.trailing, 28)
             }
             .scrollIndicators(.never)
             .scrollTargetBehavior(.viewAligned)
