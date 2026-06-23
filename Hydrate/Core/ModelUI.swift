@@ -59,9 +59,12 @@ struct _WorkContextActions: View {
                             method: .delete,
                             headers: globalRequestHeaders
                         ) { _, isSuccess in
-                            if !isSuccess {
+                            if isSuccess {
+                                LibraryCache.shared.removeFavorite(work)
+                            } else {
                                 NKTipper.automaticStyle.present(text: "移除时出错", symbol: "xmark.circle.fill")
                             }
+                            
                         }
                     }
                 } else {
@@ -74,6 +77,7 @@ struct _WorkContextActions: View {
                             headers: globalRequestHeaders
                         ) { _, isSuccess in
                             if isSuccess {
+                                LibraryCache.shared.addFavorite(work)
                                 NKTipper.automaticStyle.present(text: "已添加到收藏", symbol: "checkmark.circle.fill")
                             } else {
                                 NKTipper.automaticStyle.present(text: "收藏时出错", symbol: "xmark.circle.fill")

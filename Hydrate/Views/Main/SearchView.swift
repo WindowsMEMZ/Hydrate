@@ -69,9 +69,6 @@ struct SearchView: View {
                     updateSearchHistory()
                 }
             }
-            Spacer()
-                .frame(height: 50)
-                .listRowSeparator(.hidden, edges: .bottom)
         }
         .listStyle(.plain)
         .searchable(text: $searchText, tokens: $searchTokens, prompt: "音声、声优、标签，以及更多") { token in

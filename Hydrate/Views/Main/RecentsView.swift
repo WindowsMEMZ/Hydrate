@@ -20,7 +20,6 @@ struct RecentsView: View {
                             .workListStyle(.grid)
                     }
                     .padding()
-                    .padding(.bottom, 60)
                 }
             } else {
                 ContentUnavailableView("无最近浏览项目", systemImage: "clock.fill")

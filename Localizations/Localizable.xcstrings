@@ -399,7 +399,14 @@
       }
     },
     "存储到相册" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save to Album"
+          }
+        }
+      }
     },
     "密码" : {
       "localizations" : {
@@ -643,6 +650,16 @@
         }
       }
     },
+    "收藏或下载作品以在资料库中显示" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save or download works to display in Library."
+          }
+        }
+      }
+    },
     "收藏时出错" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -691,6 +708,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Text Unavailable"
+          }
+        }
+      }
+    },
+    "无内容" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No Content"
           }
         }
       }
@@ -941,7 +968,14 @@
       }
     },
     "载入内容时出错" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An error occurred while loading contents."
+          }
+        }
+      }
     },
     "退出登录" : {
       "localizations" : {

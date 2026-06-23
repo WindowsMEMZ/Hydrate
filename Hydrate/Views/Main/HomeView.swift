@@ -22,31 +22,35 @@ struct HomeView: View {
     @State var isLoadingMore = false
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading) {
+            VStack(alignment: .leading, spacing: 25) {
                 if !accountToken.isEmpty {
-                    Text("专属精选推荐")
-                        .font(.system(size: 22, weight: .bold))
-                    WorkListView(works: userSuggestionWorks)
-                }
-                Text("热门")
-                    .font(.system(size: 22, weight: .bold))
-                WorkListView(works: popularWorks)
-                Text("所有作品")
-                    .font(.system(size: 22, weight: .bold))
-                WorkListView(works: allWorks)
-                    .workListStyle(.grid)
-                    .onLastItemAppear {
-                        if !isLoadingMore && currentPage <= totalPage {
-                            loadMore()
-                        }
+                    VStack(alignment: .leading) {
+                        Text("专属精选推荐")
+                            .font(.system(size: 22, weight: .bold))
+                        WorkListView(works: userSuggestionWorks)
                     }
-                if isLoadingMore {
-                    ProgressView()
-                        .controlSize(.large)
-                        .centerAligned()
                 }
-                Spacer()
-                    .frame(height: 20)
+                VStack(alignment: .leading) {
+                    Text("热门")
+                        .font(.system(size: 22, weight: .bold))
+                    WorkListView(works: popularWorks)
+                }
+                VStack(alignment: .leading) {
+                    Text("所有作品")
+                        .font(.system(size: 22, weight: .bold))
+                    WorkListView(works: allWorks)
+                        .workListStyle(.grid)
+                        .onLastItemAppear {
+                            if !isLoadingMore && currentPage <= totalPage {
+                                loadMore()
+                            }
+                        }
+                    if isLoadingMore {
+                        ProgressView()
+                            .controlSize(.large)
+                            .centerAligned()
+                    }
+                }
             }
             .padding()
         }

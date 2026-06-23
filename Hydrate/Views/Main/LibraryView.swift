@@ -17,32 +17,45 @@ struct LibraryView: View {
     var body: some View {
         Group {
             if !accountToken.isEmpty {
-                ScrollView {
-                    VStack(alignment: .leading) {
-                        if !favoriteWorks.isEmpty {
-                            NavigationLink(destination: { FavoritesView() }, label: {
-                                HStack(spacing: 5) {
-                                    Text("我的收藏")
-                                        .font(.system(size: 22, weight: .bold))
-                                        .foregroundStyle(Color.primary)
-                                    Image(systemName: "chevron.forward")
-                                        .font(.system(size: 18, weight: .bold))
-                                        .foregroundStyle(.gray)
+                Group {
+                    if hasContent {
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: 25) {
+                                if !favoriteWorks.isEmpty {
+                                    VStack(alignment: .leading) {
+                                        NavigationLink(destination: { FavoritesView() }, label: {
+                                            HStack(spacing: 5) {
+                                                Text("我的收藏")
+                                                    .font(.system(size: 22, weight: .bold))
+                                                    .foregroundStyle(Color.primary)
+                                                Image(systemName: "chevron.forward")
+                                                    .font(.system(size: 18, weight: .bold))
+                                                    .foregroundStyle(.gray)
+                                            }
+                                        })
+                                        .buttonStyle(.borderless)
+                                        WorkListView(works: favoriteWorks)
+                                    }
                                 }
-                            })
-                            .buttonStyle(.borderless)
-                            WorkListView(works: favoriteWorks)
+                                if !downloadedWorks.isEmpty {
+                                    VStack(alignment: .leading) {
+                                        Text("已下载")
+                                            .font(.system(size: 22, weight: .bold))
+                                            .foregroundStyle(Color.primary)
+                                        WorkListView(works: downloadedWorks)
+                                            .workListStyle(.grid)
+                                    }
+                                }
+                            }
+                            .padding()
                         }
-                        if !downloadedWorks.isEmpty {
-                            Text("已下载")
-                                .font(.system(size: 22, weight: .bold))
-                                .foregroundStyle(Color.primary)
-                            WorkListView(works: downloadedWorks)
-                                .workListStyle(.grid)
-                        }
+                    } else {
+                        ContentUnavailableView(
+                            "无内容",
+                            systemImage: "nosign",
+                            description: Text("收藏或下载作品以在资料库中显示")
+                        )
                     }
-                    .padding()
-                    .padding(.bottom, 60)
                 }
                 .refreshable {
                     refresh()
@@ -51,16 +64,26 @@ struct LibraryView: View {
                     refresh()
                 }
             } else {
-                ContentUnavailableView("尚未登录", systemImage: "person.crop.circle.badge.questionmark.fill", description: Text("在“账户”页面登录以访问资料库"))
+                ContentUnavailableView(
+                    "尚未登录",
+                    systemImage: "person.crop.circle.badge.questionmark.fill",
+                    description: Text("在“账户”页面登录以访问资料库")
+                )
             }
         }
         .navigationTitle("资料库")
     }
     
-    func refresh() {
+    private var hasContent: Bool {
+        !favoriteWorks.isEmpty || !downloadedWorks.isEmpty
+    }
+    
+    private func refresh() {
+        favoriteWorks = LibraryCache.shared.favoriteWorks
         requestJSON("https://api.asmr.one/api/review?order=updated_at&sort=desc&page=1", headers: globalRequestHeaders) { respJson, isSuccess in
             if isSuccess {
                 favoriteWorks = getJsonData([Work].self, from: respJson["works"].rawString()!) ?? []
+                LibraryCache.shared.updateFavorites(favoriteWorks)
             }
         }
         downloadedWorks = DownloadManager.shared.downloadedWorks()
