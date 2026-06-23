@@ -348,6 +348,7 @@
       }
     },
     "图像" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -396,6 +397,9 @@
           }
         }
       }
+    },
+    "存储到相册" : {
+
     },
     "密码" : {
       "localizations" : {
@@ -671,6 +675,7 @@
       }
     },
     "文本" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -934,6 +939,9 @@
           }
         }
       }
+    },
+    "载入内容时出错" : {
+
     },
     "退出登录" : {
       "localizations" : {

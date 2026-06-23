@@ -14,3 +14,11 @@ struct GenericUIViewRepresentable: UIViewRepresentable {
     }
     func updateUIView(_ uiView: UIViewType, context: Context) {}
 }
+
+struct GenericUIViewControllerRepresentable: UIViewControllerRepresentable {
+    var viewController: UIViewController
+    func makeUIViewController(context: Context) -> UIViewController {
+        viewController
+    }
+    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
+}

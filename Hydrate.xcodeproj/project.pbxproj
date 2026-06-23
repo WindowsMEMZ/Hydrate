@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8C02C23E2FEA8722007A27C5 /* FileTrackContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C02C23D2FEA871D007A27C5 /* FileTrackContentView.swift */; };
 		8C0E54BF2DC46B2400FE6B5B /* DownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C0E54BE2DC46B1D00FE6B5B /* DownloadManager.swift */; };
 		8C0E54FA2DC4E14800FE6B5B /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 8C0E54F92DC4E14800FE6B5B /* Localizable.xcstrings */; };
 		8C0E55042DC4E19A00FE6B5B /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 8C0E55022DC4E19A00FE6B5B /* InfoPlist.strings */; };
@@ -53,6 +54,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		8C02C23D2FEA871D007A27C5 /* FileTrackContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileTrackContentView.swift; sourceTree = "<group>"; };
 		8C0E54BE2DC46B1D00FE6B5B /* DownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadManager.swift; sourceTree = "<group>"; };
 		8C0E54F92DC4E14800FE6B5B /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		8C0E55032DC4E19A00FE6B5B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -202,6 +204,7 @@
 			children = (
 				8C43EAD72FE970C900065C74 /* WorkListView.swift */,
 				8C43EAD62FE970C900065C74 /* WorkDetailView.swift */,
+				8C02C23D2FEA871D007A27C5 /* FileTrackContentView.swift */,
 			);
 			path = Work;
 			sourceTree = "<group>";
@@ -347,6 +350,7 @@
 				8CEF72E42FDAE5A500EE37B5 /* LyricsTranscriber.swift in Sources */,
 				8CD0E1D72DC33EEC00997186 /* Combine.swift in Sources */,
 				8C9E66062FE2D36F003AD34F /* LyricTranslation.swift in Sources */,
+				8C02C23E2FEA8722007A27C5 /* FileTrackContentView.swift in Sources */,
 				8C43EAE92FE976DC00065C74 /* ModelUI.swift in Sources */,
 				8CD0E1A02DC245FF00997186 /* AVPlayer+PeriodicTimePublisher.swift in Sources */,
 				8C43EAD92FE970C900065C74 /* AboutView.swift in Sources */,

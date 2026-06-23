@@ -24,9 +24,7 @@ struct WorkDetailView: View {
     @State private var tracks: [TrackStructure]?
     @State private var trackListHeightObservation: NSKeyValueObservation?
     @State private var trackListHeight: CGFloat = 1
-    @State private var textFileURLPresentation: String?
-    @State private var textFilePresentationContent: String?
-    @State private var imageFileURLPresentation: String?
+    @State private var presentingFileTrack: TrackStructure?
     @State private var workTitleHeight: CGFloat = 0
     @State private var isShowingNavigationTitle = false
     @State private var moreWorksByAuthor = [(String, [Work])]()
@@ -125,34 +123,20 @@ struct WorkDetailView: View {
                                         trackTrailingArena(for: track)
                                     }
                                 })
-                            case .text:
-                                Button(action: {
-                                    textFileURLPresentation = DownloadManager.shared.contentURL(track: track, of: work)?.absoluteString ?? track.mediaStreamUrl!
-                                }, label: {
+                            default:
+                                Button {
+                                    presentingFileTrack = track
+                                } label: {
                                     HStack {
-                                        Label(track.title, systemImage: "text.document")
+                                        Label(track.title, systemImage: {
+                                            switch track.type {
+                                            case .text: "text.document"
+                                            case .image: "photo"
+                                            default: "document"
+                                            }
+                                        }())
                                         Spacer()
                                         trackTrailingArena(for: track)
-                                    }
-                                })
-                            case .image:
-                                Button(action: {
-                                    imageFileURLPresentation = DownloadManager.shared.contentURL(track: track, of: work)?.absoluteString ?? track.mediaStreamUrl!
-                                }, label: {
-                                    HStack {
-                                        Label(track.title, systemImage: "photo")
-                                        Spacer()
-                                        trackTrailingArena(for: track)
-                                    }
-                                })
-                            case .other:
-                                if let url = track.mediaStreamUrl {
-                                    Link(destination: URL(string: url)!) {
-                                        HStack {
-                                            Label(track.title, systemImage: "document")
-                                            Spacer()
-                                            trackTrailingArena(for: track)
-                                        }
                                     }
                                 }
                             }
@@ -162,8 +146,10 @@ struct WorkDetailView: View {
                         .frame(height: trackListHeight)
                         .padding(.horizontal, -16)
                         .introspect(.list, on: .iOS(.v26...)) { tableView in
-                            trackListHeightObservation = tableView.observe(\.contentSize) { _, _ in
-                                trackListHeight = tableView.contentSize.height
+                            if trackListHeightObservation == nil {
+                                trackListHeightObservation = tableView.observe(\.contentSize) { _, _ in
+                                    trackListHeight = tableView.contentSize.height
+                                }
                             }
                         }
                     } else {
@@ -337,63 +323,10 @@ struct WorkDetailView: View {
                 }
             }
         }
-        .sheet(item: $textFileURLPresentation) { url in
-            NavigationStack {
-                Group {
-                    if let text = textFilePresentationContent {
-                        TextEditor(text: .constant(text))
-                            .padding()
-                    } else {
-                        ProgressView()
-                            .controlSize(.large)
-                    }
-                }
-                .navigationTitle("文本")
-                .navigationBarTitleDisplayMode(.inline)
-                .withDismissButton {
-                    textFileURLPresentation = nil
-                }
-            }
-            .onAppear {
-                Task {
-                    let result = await requestString(url)
-                    if case let .success(respStr) = result {
-                        textFilePresentationContent = respStr
-                    }
-                }
-            }
-            .onDisappear {
-                textFilePresentationContent = nil
-            }
-        }
-        .sheet(item: $imageFileURLPresentation) { url in
-            NavigationStack {
-                AsyncImage(url: URL(string: url)) { image in
-                    image.resizable()
-                } placeholder: {
-                    ProgressView()
-                        .controlSize(.large)
-                }
-                .scaledToFit()
-                .navigationTitle("图像")
-                .navigationBarTitleDisplayMode(.inline)
-                .withDismissButton({
-                    textFileURLPresentation = nil
-                }, placement: .leading)
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button(action: {
-                            DispatchQueue(label: "com.memz233.Hydrate.SaveImageToPhotos", qos: .userInitiated).async {
-                                if let _data = try? Data(contentsOf: URL(string: url)!),
-                                   let image = UIImage(data: _data) {
-                                    UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
-                                    NKTipper.automaticStyle.present(text: "已存储", symbol: "checkmark.circle.fill")
-                                }
-                            }
-                        }, label: {
-                            Image(systemName: "square.and.arrow.down")
-                        })
-                    }
+        .sheet(item: $presentingFileTrack) { track in
+            if let work {
+                NavigationStack {
+                    FileTrackContentView(track: track, work: work)
                 }
             }
         }

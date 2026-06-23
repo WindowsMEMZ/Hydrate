@@ -130,6 +130,9 @@ extension TrackStructure: Hashable {
         hasher.combine(stableHashValue)
     }
 }
+extension TrackStructure: Identifiable {
+    var id: Int { stableHashValue }
+}
 extension Array<TrackStructure> {
     var flattened: [TrackStructure] {
         var result: [TrackStructure] = []
