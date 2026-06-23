@@ -21,7 +21,6 @@ struct ContentView: View {
     @AppStorage("MainTabSelection") private var tabSelection = 1
     @State private var audioPlayer = AudioPlayer.shared
     @State private var isNowPlayingPresented = false
-    @State private var isAccountManagementPresented = false
     var body: some View {
         ZStack(alignment: .bottom) {
             TabView(selection: .init { tabSelection } set: {
@@ -33,18 +32,7 @@ struct ContentView: View {
                 Tab(value: 1) {
                     NavigationStack {
                         HomeView()
-                            .toolbar {
-                                ToolbarItem(placement: .topBarTrailing) {
-                                    Button(action: {
-                                        isAccountManagementPresented = true
-                                    }, label: {
-                                        Image(systemName: "person.crop.circle")
-                                            .font(.system(size: 28, weight: .medium))
-                                            .foregroundStyle(.accent)
-                                    })
-                                }
-                                .sharedBackgroundVisibility(.hidden)
-                            }
+                            .toolbarAccountButton()
                     }
                 } label: {
                     Image(_internalSystemName: "home.fill")
@@ -53,52 +41,19 @@ struct ContentView: View {
                 Tab("最近浏览", systemImage: "clock.fill", value: 4) {
                     NavigationStack {
                         RecentsView()
-                            .toolbar {
-                                ToolbarItem(placement: .topBarTrailing) {
-                                    Button(action: {
-                                        isAccountManagementPresented = true
-                                    }, label: {
-                                        Image(systemName: "person.crop.circle")
-                                            .font(.system(size: 28, weight: .medium))
-                                            .foregroundStyle(.accent)
-                                    })
-                                }
-                                .sharedBackgroundVisibility(.hidden)
-                            }
+                            .toolbarAccountButton()
                     }
                 }
                 Tab("资料库", systemImage: "rectangle.stack.fill", value: 2) {
                     NavigationStack {
                         LibraryView()
-                            .toolbar {
-                                ToolbarItem(placement: .topBarTrailing) {
-                                    Button(action: {
-                                        isAccountManagementPresented = true
-                                    }, label: {
-                                        Image(systemName: "person.crop.circle")
-                                            .font(.system(size: 28, weight: .medium))
-                                            .foregroundStyle(.accent)
-                                    })
-                                }
-                                .sharedBackgroundVisibility(.hidden)
-                            }
+                            .toolbarAccountButton()
                     }
                 }
                 Tab("搜索", systemImage: "magnifyingglass", value: 3, role: .search) {
                     NavigationStack {
                         SearchView(isSearchKeyboardFocused: $isSearchKeyboardFocused)
-                            .toolbar {
-                                ToolbarItem(placement: .topBarTrailing) {
-                                    Button(action: {
-                                        isAccountManagementPresented = true
-                                    }, label: {
-                                        Image(systemName: "person.crop.circle")
-                                            .font(.system(size: 28, weight: .medium))
-                                            .foregroundStyle(.accent)
-                                    })
-                                }
-                                .sharedBackgroundVisibility(.hidden)
-                            }
+                            .toolbarAccountButton()
                     }
                 }
             }
@@ -117,7 +72,6 @@ struct ContentView: View {
             NowPlayingView()
         }
         .ignoresSafeArea(edges: .top)
-        .sheet(isPresented: $isAccountManagementPresented, content: { AccountView() })
     }
     
     var nowPlayingAccessoryView: some View {

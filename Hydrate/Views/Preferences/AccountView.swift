@@ -28,9 +28,8 @@ struct AccountView: View {
                 if !accountToken.isEmpty {
                     Section {
                         HStack {
-                            Image(systemName: "person.crop.circle")
-                                .font(.system(size: 40))
-                                .foregroundStyle(.accent)
+                            UsernameAvatarView()
+                                .frame(width: 60, height: 60)
                             Text(cachedUserName)
                         }
                         Button("退出登录", role: .destructive) {
