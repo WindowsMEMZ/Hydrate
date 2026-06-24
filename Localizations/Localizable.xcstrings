@@ -266,17 +266,6 @@
         }
       }
     },
-    "停止下载" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Stop Downloading"
-          }
-        }
-      }
-    },
     "关于 App" : {
       "localizations" : {
         "en" : {
@@ -343,17 +332,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cancel Downloading"
-          }
-        }
-      }
-    },
-    "图像" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Image"
           }
         }
       }
@@ -439,7 +417,6 @@
       }
     },
     "已存储" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -450,7 +427,6 @@
       }
     },
     "已添加到收藏" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -661,7 +637,6 @@
       }
     },
     "收藏时出错" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -687,17 +662,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "File Type"
-          }
-        }
-      }
-    },
-    "文本" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Text"
           }
         }
       }
@@ -753,7 +717,6 @@
       }
     },
     "未知错误" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -874,7 +837,6 @@
       }
     },
     "移除时出错" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {

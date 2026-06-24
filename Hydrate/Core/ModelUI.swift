@@ -23,7 +23,7 @@ struct _WorkPreviewView: View {
                     .redacted(reason: .placeholder)
             }
             .scaledToFill()
-            .frame(width: UIScreen.main.bounds.width - 100, height: UIScreen.main.bounds.width - 100)
+            .frame(width: windowBounds.width - 100, height: windowBounds.width - 100)
             .clipped()
             .cornerRadius(8)
             .padding(.horizontal)
@@ -41,7 +41,13 @@ struct _WorkPreviewView: View {
             }
             .padding(.horizontal)
         }
-        .frame(width: UIScreen.main.bounds.width - 70, height: UIScreen.main.bounds.width + 40)
+        .frame(width: windowBounds.width - 70, height: windowBounds.width + 40)
+    }
+    
+    @diagnose(DeprecatedDeclaration, as: ignored)
+    private var windowBounds: CGRect {
+        UIApplication.shared.connectedScenes.activeWindowScene?.keyWindow?.bounds
+        ?? UIScreen.main.bounds
     }
 }
 
