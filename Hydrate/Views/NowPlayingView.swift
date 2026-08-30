@@ -65,8 +65,10 @@ struct NowPlayingView: View {
             .padding(-2)
         }
         .introspect(.sheet, on: .iOS(.v26...)) { controller in
-//            controller.perform(NSSelectorFromString("_setAllowsInteractiveDismissWhenFullScreen:"), with: true)
-            controller.detents = [UISheetPresentationController.Detent.value(forKey: "_fullDetent") as! UISheetPresentationController.Detent]
+            controller.perform(
+                NSSelectorFromString("_setConfiguration:"),
+                with: (NSClassFromString("_UISheetPresentationControllerConfiguration") as! NSObject.Type).value(forKey: "_fullScreenConfiguration")
+            )
         }
     }
 }
@@ -116,6 +118,7 @@ struct _NowPlayingHeaderView: View {
                                 .marquee()
                         }
                     }
+                    .marqueeGroup()
                     if !accountToken.isEmpty {
                         StarButton(isStarred: $audioPlayer.isStarred) {
                             if !audioPlayer.isStarred {
@@ -150,12 +153,12 @@ struct _NowPlayingContentView: View {
     @Namespace private var coverScaleNamespace
     @Environment(SceneDelegate.self) private var sceneDelegate
     @State private var audioPlayer = AudioPlayer.shared
-    @State private var currentPlaybackTime = 0.0
+    @State private var currentPlaybackTime = AudioPlayer.shared.currentTime
     @State private var currentScrolledId = 0.0
     @State private var visibleLyricIDs: Set<Double> = []
     @State private var isShowingControls = false
     @State private var isProgressDraging = false
-    @State private var progressDragingNewTime = 0.0
+    @State private var progressDragingNewTime = AudioPlayer.shared.currentTime
     @State private var controlMenuDismissTimer: Timer?
     @State private var isUserScrolling = false
     @State private var canResetUserScrolling = false
@@ -171,10 +174,18 @@ struct _NowPlayingContentView: View {
             if let media = audioPlayer.media {
                 ZStack {
                     if let lyrics = media.lyrics, !lyrics.isEmpty {
-                        LyricsView(lyrics: lyrics, currentTime: currentPlaybackTime)
+                        LyricsView(
+                            lyrics: lyrics,
+                            currentTime: displayedPlaybackTime,
+                            isScrubbing: isProgressDraging
+                        )
                     } else if let transcriptions = audioPlayer.transcriptions {
                         if let lyrics = transcriptions.asLyrics() {
-                            LyricsView(lyrics: lyrics, currentTime: currentPlaybackTime)
+                            LyricsView(
+                            lyrics: lyrics,
+                            currentTime: displayedPlaybackTime,
+                            isScrubbing: isProgressDraging
+                        )
                         } else {
                             TranscriptionTextView(transcriptions: transcriptions)
                         }
@@ -230,7 +241,7 @@ struct _NowPlayingContentView: View {
                                     .sliderThumbVisibility(.hidden)
                                     .tint(.white)
                                     HStack {
-                                        Text(formattedTime(from: currentPlaybackTime))
+                                        Text(formattedTime(from: displayedPlaybackTime))
                                             .font(.system(size: 11, weight: .semibold))
                                             .opacity(0.6)
                                         Spacer()
@@ -285,9 +296,13 @@ struct _NowPlayingContentView: View {
                                     Image(systemName: "speaker.fill")
                                         .font(.system(size: 14))
                                     ZStack {
-                                        GenericUIViewRepresentable(view: volumeView)
-                                            .offset(x: 1000, y: 1000)
-                                            .frame(width: 10, height: 10)
+                                        if isShowingControls || alwaysShowControls {
+                                            // Let iOS show system volume view when controls
+                                            // are not visible
+                                            GenericUIViewRepresentable(view: volumeView)
+                                                .offset(x: 1000, y: 1000)
+                                                .frame(width: 10, height: 10)
+                                        }
                                         Slider(value: $volumeDragingNewValue) { isEditing in
                                             isVolumeDraging = isEditing
                                             if !isEditing {
@@ -369,6 +384,10 @@ struct _NowPlayingContentView: View {
             }
         }
         .onAppear {
+            currentPlaybackTime = audioPlayer.currentTime
+            if !isProgressDraging {
+                progressDragingNewTime = currentPlaybackTime
+            }
             isShowingControls = true
             resetMenuDismissTimer()
             UIApplication.shared.isIdleTimerDisabled = true
@@ -395,6 +414,9 @@ struct _NowPlayingContentView: View {
         }
     }
     
+    var displayedPlaybackTime: TimeInterval {
+        isProgressDraging ? progressDragingNewTime : currentPlaybackTime
+    }
     var currentItemTotalTime: TimeInterval {
         audioPlayer.audioDuration ?? 0
     }
@@ -532,21 +554,42 @@ struct _NowPlayingContentView: View {
 
 private let _lyricLineSpacing: CGFloat = 26
 private let _lyricTopPadding: CGFloat = 80
+private let _waitingProgressHeight: CGFloat = 34
 private struct LyricsView: View {
     var lyrics: [ClosedRange<Double>: String]
     var currentTime: Double
+    var isScrubbing: Bool
     @AppStorage("TranscriptionTranslationEnabled") private var transcriptionTranslationEnabled = false
     @State private var audioPlayer = AudioPlayer.shared
-    @State private var currentIndex = 0
+    @State private var currentIndex: Int
     @State private var lineHeights: [CGFloat] = []
     @State private var pageOffset: CGFloat = 0
     @State private var underlyingScrollView: UIScrollView?
     @State private var heightBeforeCurrent: CGFloat = 0
+    @State private var isProgrammaticScrolling = false
     @State private var showingFullContent = false
     @State private var canResetShowingFullContent = false
     @State private var isShowingWaitingProgress = false
     @State private var pressedIndex: Int?
     @State private var translations: [String?] = []
+    
+    init(
+        lyrics: [ClosedRange<Double>: String],
+        currentTime: Double,
+        isScrubbing: Bool
+    ) {
+        self.lyrics = lyrics
+        self.currentTime = currentTime
+        self.isScrubbing = isScrubbing
+        
+        let lyricKeys = lyrics.keys.sorted {
+            $0.lowerBound < $1.lowerBound
+        }
+        _currentIndex = State(initialValue: lyricKeys.lastIndex {
+            $0.lowerBound <= currentTime
+        } ?? 0)
+    }
+    
     var body: some View {
         ZStack(alignment: .top) {
             let lyricKeys = Array<ClosedRange<Double>>(lyrics.keys)
@@ -570,18 +613,20 @@ private struct LyricsView: View {
                                         pressedIndex = nil
                                     }
                                 } perform: {
-                                    currentIndex = index
-                                    showingFullContent = false
-                                    audioPlayer.seek(to: lyricKeys[index].lowerBound)
-                                    audioPlayer.play()
-                                    withAnimation(.easeOut) {
-                                        pageOffset = 0
+                                    pressedIndex = index
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                                        pressedIndex = nil
                                     }
+                                    
+                                    selectLyric(
+                                        at: index,
+                                        time: lyricKeys[index].lowerBound
+                                    )
                                 }
                             if isShowingWaitingProgress && currentIndex == index {
                                 Rectangle()
                                     .fill(Color.clear)
-                                    .frame(height: 34)
+                                    .frame(height: _waitingProgressHeight)
                             }
                         }
                         Rectangle()
@@ -599,7 +644,10 @@ private struct LyricsView: View {
             .onScrollGeometryChange(for: CGFloat.self) { geometry in
                 -geometry.contentOffset.y + heightBeforeCurrent
             } action: { oldValue, newValue in
-                pageOffset = newValue
+                guard !isProgrammaticScrolling else { return }
+                if abs(pageOffset - newValue) > 0.001 {
+                    pageOffset = newValue
+                }
             }
             .onScrollPhaseChange { _, newPhase in
                 if newPhase == .interacting || newPhase == .decelerating {
@@ -624,12 +672,21 @@ private struct LyricsView: View {
                                 pageHeight: geometry.size.height,
                                 isPressed: pressedIndex == index,
                                 isShowingWaitingProgress: isShowingWaitingProgress,
+                                isProgrammaticScrolling: isProgrammaticScrolling,
+                                isScrubbing: isScrubbing,
                                 lineHeights: $lineHeights,
                                 showingFullContent: $showingFullContent,
                                 canResetShowingFullContent: $canResetShowingFullContent,
+                                beginPageOffsetUpdate: {
+                                    prepareForProgrammaticScroll(to: currentIndex)
+                                },
                                 updatePageOffset: { newOffset in
                                     underlyingScrollView?.contentOffset.y = heightBeforeCurrent - newOffset
                                     pageOffset = newOffset
+                                },
+                                finishPageOffsetUpdate: {
+                                    underlyingScrollView?.contentOffset.y = heightBeforeCurrent
+                                    isProgrammaticScrolling = false
                                 }
                             )
                         }
@@ -638,21 +695,40 @@ private struct LyricsView: View {
                             let waitingRange = lyricKeys[currentIndex].upperBound...lyricKeys[currentIndex + 1].lowerBound
                             let waitingDuration = waitingRange.upperBound - waitingRange.lowerBound
                             let isShowing = waitingDuration > 5 && waitingRange.contains(currentTime)
-                            WaitingProgressView(
-                                value: currentTime - lyricKeys[currentIndex].upperBound,
-                                duration: waitingDuration
-                            )
-                            .opacity(isShowing ? 1 : 0)
-                            .offset(y: 90)
-                            .animation(.smooth, value: isShowing)
-                            .onChange(of: isShowing) {
-                                isShowingWaitingProgress = isShowing
+                            
+                            Group {
+                                if isShowing {
+                                    WaitingProgressView(
+                                        range: waitingRange,
+                                        currentTime: currentTime,
+                                        isScrubbing: isScrubbing
+                                    )
+                                    .frame(height: _waitingProgressHeight)
+                                    .offset(
+                                        y: 90 + (
+                                            showingFullContent ? pageOffset : 0
+                                        )
+                                    )
+                                    .animation(.spring, value: showingFullContent)
+                                    .transition(.opacity)
+                                }
                             }
+                            .animation(.smooth, value: isShowing)
+                            
+                            Color.clear
+                                .frame(width: 0, height: 0)
+                                .onChange(of: isShowing, initial: true) {
+                                    isShowingWaitingProgress = isShowing
+                                    if isShowing && showingFullContent && canResetShowingFullContent {
+                                        canResetShowingFullContent = false
+                                        prepareForProgrammaticScroll(to: currentIndex)
+                                        showingFullContent = false
+                                    }
+                                }
                         }
                     }
                 }
                 .padding(.horizontal, 30)
-                .transformEffect(.init(translationX: 0, y: pageOffset))
                 .onChange(of: lyrics.count, initial: true) {
                     lineHeights = .init(repeating: 0, count: lyrics.count)
                     
@@ -667,14 +743,12 @@ private struct LyricsView: View {
                         }
                     }
                 }
-                .onChange(of: currentTime) {
-                    // Update current index
-                    for (index, range) in lyricKeys.enumerated() {
-                        if range.contains(currentTime) {
-                            currentIndex = index
-                            break
-                        }
-                    }
+                .onChange(of: currentTime, initial: true) {
+                    // During an inter-lyric gap, keep the most recently started
+                    // line current instead of falling back to the first line.
+                    currentIndex = lyricKeys.lastIndex {
+                        $0.lowerBound <= currentTime
+                    } ?? 0
                 }
                 .onChange(of: currentIndex) { oldValue, newValue in
                     updateScrollOffset()
@@ -692,6 +766,33 @@ private struct LyricsView: View {
         }
     }
     
+    private func prepareForProgrammaticScroll(to index: Int) {
+        guard lineHeights.indices.contains(index) else { return }
+        
+        var targetHeight = lineHeights[..<index].reduce(into: CGFloat.zero) {
+            $0 += $1 + _lyricLineSpacing
+        }
+        if isShowingWaitingProgress {
+            targetHeight += _waitingProgressHeight + _lyricLineSpacing
+        }
+        
+        isProgrammaticScrolling = true
+        heightBeforeCurrent = targetHeight
+        underlyingScrollView?.contentOffset.y = targetHeight - pageOffset
+    }
+    
+    private func selectLyric(at index: Int, time: Double) {
+        guard lineHeights.indices.contains(index) else { return }
+        
+        isShowingWaitingProgress = false
+        prepareForProgrammaticScroll(to: index)
+        currentIndex = index
+        showingFullContent = false
+        
+        audioPlayer.seek(to: time)
+        audioPlayer.play()
+    }
+    
     private func updateScrollOffset() {
         guard !showingFullContent else { return }
         
@@ -701,7 +802,9 @@ private struct LyricsView: View {
                 $0 += $1 + 26
             }
         }
-        heightBeforeCurrent += isShowingWaitingProgress ? 60 : 0
+        if isShowingWaitingProgress {
+            heightBeforeCurrent += _waitingProgressHeight + _lyricLineSpacing
+        }
         self.heightBeforeCurrent = heightBeforeCurrent
         
         underlyingScrollView?.contentOffset.y = heightBeforeCurrent - pageOffset
@@ -717,11 +820,17 @@ private struct LyricsView: View {
         var pageHeight: CGFloat
         var isPressed: Bool
         var isShowingWaitingProgress: Bool
+        var isProgrammaticScrolling: Bool
+        var isScrubbing: Bool
         @Binding var lineHeights: [CGFloat]
         @Binding var showingFullContent: Bool
         @Binding var canResetShowingFullContent: Bool
+        var beginPageOffsetUpdate: () -> Void
         var updatePageOffset: (CGFloat) -> Void
+        var finishPageOffsetUpdate: () -> Void
         @State private var offset: CGFloat = 0
+        @State private var visualPageOffset: CGFloat = 0
+        @State private var previousCurrentIndex: Int?
         var body: some View {
             HStack {
                 VStack(alignment: .leading) {
@@ -753,33 +862,51 @@ private struct LyricsView: View {
                 }
             }
             .background {
-                RoundedRectangle(cornerRadius: 10)
+                RoundedRectangle(cornerRadius: 16)
                     .fill(Color.gray)
                     .opacity(isPressed ? 0.4 : 0)
                     .padding(.horizontal, -10)
-                    .padding(.vertical, -3)
+                    .padding(.vertical, -5)
             }
             .opacity(isCurrent ? 1 : 0.6)
-            .blur(radius: showingFullContent || isCurrent ? 0 : max(CGFloat(abs(currentIndex - index)), 1))
-            .scaleEffect(isPressed ? 0.9 : 1)
-            .offset(y: offset)
+            .blur(radius: lyricBlurRadius)
+            .scaleEffect(isPressed ? 0.95 : 1)
+            // Combine the line layout and scroll displacement into one
+            // animatable value so a seek retains its on-screen starting position.
+            .offset(y: offset + visualPageOffset)
             .opacity( // performance: lazy
-                isVisible ? 1 : 0
+                isVisible || isCurrent ? 1 : 0
             )
             .animation(.smooth, value: isShowingWaitingProgress)
             .animation(.easeOut(duration: 0.2), value: isPressed)
             .onChange(of: lineHeights) {
                 updateOffset()
             }
-            .onChange(of: currentIndex) {
-                updateOffset(indexBecomingCurrent: currentIndex)
+            .onChange(of: pageOffset, initial: true) { _, newValue in
+                if !isProgrammaticScrolling {
+                    visualPageOffset = newValue
+                }
+            }
+            .onChange(of: currentIndex) { oldValue, newValue in
+                previousCurrentIndex = oldValue
+                updateOffset(
+                    indexBecomingCurrent: newValue,
+                    previousIndex: oldValue
+                )
             }
             .onChange(of: isShowingWaitingProgress) {
-                updateOffset(indexBecomingCurrent: currentIndex)
+                if showingFullContent {
+                    updateOffset()
+                } else {
+                    updateOffset(indexBecomingCurrent: currentIndex)
+                }
             }
             .onChange(of: showingFullContent) {
                 if !showingFullContent {
-                    updateOffset(indexBecomingCurrent: currentIndex)
+                    updateOffset(
+                        indexBecomingCurrent: currentIndex,
+                        previousIndex: previousCurrentIndex
+                    )
                 }
             }
         }
@@ -791,8 +918,32 @@ private struct LyricsView: View {
             -pageOffset < offset + lineHeights[index] * 2
             && -pageOffset + pageHeight > offset - lineHeights[index]
         }
+        var lyricBlurRadius: CGFloat {
+            guard isVisible, !showingFullContent, !isCurrent else { return 0 }
+            return min(CGFloat(abs(currentIndex - index)), 8)
+        }
         
-        private func updateOffset(indexBecomingCurrent: Int? = nil) {
+        private func animationDelay(
+            becomingCurrent newIndex: Int,
+            previousIndex oldIndex: Int?
+        ) -> TimeInterval {
+            guard !isScrubbing, let oldIndex, oldIndex != newIndex else { return 0 }
+            
+            // Cascade away from the new current line in the direction of travel.
+            // Cap the distance so a long seek never creates a multi-second delay.
+            let distance: Int
+            if newIndex > oldIndex {
+                distance = max(index - newIndex, 0)
+            } else {
+                distance = max(newIndex - index, 0)
+            }
+            return min(Double(distance), 6) * 0.045
+        }
+        
+        private func updateOffset(
+            indexBecomingCurrent: Int? = nil,
+            previousIndex: Int? = nil
+        ) {
             var heightBefore: CGFloat = 0
             if index > 0 {
                 heightBefore = lineHeights[0..<index].reduce(into: 0) { $0 += $1 }
@@ -808,9 +959,14 @@ private struct LyricsView: View {
             var waitingProgressOffset: CGFloat = 0
             if isShowingWaitingProgress {
                 if index <= currentIndex {
-                    waitingProgressOffset = -(lineHeights[index] + _lyricLineSpacing)
+                    waitingProgressOffset = -(
+                        lineHeights[currentIndex] + _lyricLineSpacing
+                    )
                 } else {
-                    waitingProgressOffset = -max(lineHeights[currentIndex] - 40, 0)
+                    waitingProgressOffset = -max(
+                        lineHeights[currentIndex] - 40,
+                        0
+                    )
                 }
             }
             
@@ -820,26 +976,47 @@ private struct LyricsView: View {
             
             if let indexBecomingCurrent {
                 if index == indexBecomingCurrent
-                    && canResetShowingFullContent
-                    && isVisible {
+                    && showingFullContent
+                    && canResetShowingFullContent {
+                    beginPageOffsetUpdate()
                     canResetShowingFullContent = false
                     showingFullContent = false
                     return // Actual update in next call, by onChange(of: showingFullContent)
                 }
                 if !showingFullContent {
-                    withAnimation(.easeOut) {
-                        updatePageOffset(0)
-                    }
-                    
-                    if isVisible {
-                        DispatchQueue.main.asyncAfter(
-                            deadline: .now() + 0.1 * max(Double(index - indexBecomingCurrent), 0)
-                        ) {
-                            withAnimation(.spring) {
+                    let isTargetLyric = index == indexBecomingCurrent
+                    let isNearSelectedLyric = abs(index - indexBecomingCurrent) <= 10
+                    if isVisible || (isProgrammaticScrolling && isNearSelectedLyric) {
+                        let delay = animationDelay(
+                            becomingCurrent: indexBecomingCurrent,
+                            previousIndex: previousIndex
+                        )
+                        if isTargetLyric {
+                            // The line offset and page offset form one visual position.
+                            // Commit both targets together to avoid an intermediate
+                            // downward movement before the line starts moving upward.
+                            withAnimation(
+                                .spring.delay(delay),
+                                completionCriteria: .logicallyComplete
+                            ) {
+                                updatePageOffset(0)
+                                visualPageOffset = 0
+                                _update()
+                            } completion: {
+                                finishPageOffsetUpdate()
+                            }
+                        } else {
+                            withAnimation(.spring.delay(delay)) {
+                                visualPageOffset = 0
                                 _update()
                             }
                         }
                     } else {
+                        visualPageOffset = 0
+                        if isTargetLyric {
+                            updatePageOffset(0)
+                            finishPageOffsetUpdate()
+                        }
                         _update()
                     }
                 } else {
@@ -855,22 +1032,46 @@ private struct LyricsView: View {
 }
 
 private struct WaitingProgressView: View {
-    var value: Double
-    var duration: Double
+    let range: ClosedRange<Double>
+    let currentTime: Double
+    let isScrubbing: Bool
+    
+    @State private var audioPlayer = AudioPlayer.shared
+    
     var body: some View {
-        VStack {
-            CustomProgressView(value: value / duration)
-                .frame(height: 15)
-            HStack {
-                Text(formattedTime(from: value))
-                    .font(.system(size: 11))
-                    .opacity(0.6)
-                Spacer()
-                Text(formattedTime(from: duration))
-                    .font(.system(size: 11))
-                    .opacity(0.6)
+        
+        TimelineView(
+            .animation(
+                minimumInterval: 1.0 / 60.0,
+                paused: isScrubbing || !audioPlayer.isPlaying
+            )
+        ) { context in
+            let value = progressValue(at: context.date)
+            
+            VStack(spacing: 4) {
+                CustomProgressView(value: value / duration)
+                    .frame(height: 15)
+                HStack {
+                    Text(formattedTime(from: value))
+                        .font(.system(size: 11))
+                        .opacity(0.6)
+                    Spacer()
+                    Text(formattedTime(from: duration))
+                        .font(.system(size: 11))
+                        .opacity(0.6)
+                }
             }
         }
+    }
+    
+    private var duration: TimeInterval {
+        range.upperBound - range.lowerBound
+    }
+    
+    private func progressValue(at date: Date) -> TimeInterval {
+        _ = date
+        let playbackTime = isScrubbing ? currentTime : audioPlayer.currentTime
+        return min(max(playbackTime - range.lowerBound, 0), duration)
     }
 }
 

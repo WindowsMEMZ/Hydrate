@@ -51,6 +51,9 @@ final class AudioPlayer: MediaSessionRepresentable {
         _player.publisher(for: \.timeControlStatus).sink { [weak self] status in
             self?.timeControlStatusDidUpdate(status)
         }.store(in: &_observers)
+        NotificationCenter.default.publisher(for: AVPlayerItem.didPlayToEndTimeNotification).sink { [weak self] notification in
+            self?.playerItemDidReachEnd(notification.object as? AVPlayerItem)
+        }.store(in: &_observers)
         
         _networkPathMonitor.pathUpdateHandler = { [weak self] path in
             guard let self else { return }
@@ -74,7 +77,6 @@ final class AudioPlayer: MediaSessionRepresentable {
     private var _playbackStateUpdateDate = Date.now
     var elapsedTime: TimeInterval = 0
     private var mediaSession: MediaSession<AudioPlayer>?
-    private var looper: AVPlayerLooper?
     
     @ObservationIgnored
     @AppStorage("AutoTranscribeEnabled") private var autoTranscribeEnabled = false
@@ -214,7 +216,7 @@ final class AudioPlayer: MediaSessionRepresentable {
         let asset = AVURLAsset(url: mediaURL, options: _urlAssetOptions)
         let newItem = AVPlayerItem(asset: asset)
         _player.replaceCurrentItem(with: newItem)
-        repeatModeDidUpdate(newItem)
+        repeatModeDidUpdate()
         if !media.preventAutoPlaying {
             Task {
                 _ = try? await AVAudioSession.sharedInstance().activate()
@@ -305,25 +307,29 @@ final class AudioPlayer: MediaSessionRepresentable {
         }
         elapsedTime = currentTime
     }
-    private func repeatModeDidUpdate(_ newItem: AVPlayerItem? = nil) {
+    private func repeatModeDidUpdate() {
         UserDefaults.standard.set(
             repeatMode.rawValue,
             forKey: "PlayerRepeatMode"
         )
         
-        looper?.disableLooping()
-        looper = nil
-        
-        guard let newItem = newItem ?? _player.currentItem else { return }
         switch repeatMode {
         case .off:
-            break
+            _player.actionAtItemEnd = .advance
         case .one:
-            looper = .init(player: _player, templateItem: newItem)
+            _player.actionAtItemEnd = .none
         case .all:
+            _player.actionAtItemEnd = .advance
             os_log(.fault, "Unsupported media repeat mode: all")
-        @unknown default: return
+        @unknown default:
+            _player.actionAtItemEnd = .advance
         }
+    }
+    private func playerItemDidReachEnd(_ item: AVPlayerItem?) {
+        guard repeatMode == .one, item === _player.currentItem else { return }
+        
+        _player.seek(to: .zero)
+        _player.play()
     }
     
     private func _updateTranscription(

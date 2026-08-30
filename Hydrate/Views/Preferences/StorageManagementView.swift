@@ -48,6 +48,7 @@ private struct StorageWorksView: View {
                                             .marquee()
                                     }
                                     .lineLimit(1)
+                                    .marqueeGroup()
                                     Spacer()
                                     Text(formatter.string(fromByteCount: DownloadManager.shared.workContentSize(work)))
                                         .foregroundStyle(.secondary)

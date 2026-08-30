@@ -97,6 +97,7 @@ struct ContentView: View {
                         .marquee(trailingFade: 10)
                 }
                 .lineLimit(1)
+                .marqueeGroup()
                 Spacer()
                 Button(action: {
                     if audioPlayer.isPlaying {
@@ -125,5 +126,13 @@ struct ContentView: View {
         .onTapGesture {
             isNowPlayingPresented = true
         }
+        .simultaneousGesture(
+            DragGesture(coordinateSpace: .global)
+                .onChanged { value in
+                    if value.translation.height < -20 {
+                        isNowPlayingPresented = true
+                    }
+                }
+        )
     }
 }
