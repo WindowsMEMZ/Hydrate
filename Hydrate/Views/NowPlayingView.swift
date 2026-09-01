@@ -167,8 +167,8 @@ struct _NowPlayingContentView: View {
     @State private var isVolumeDraging = false
     @State private var volumeView = MPVolumeView()
     @State private var volumeDragingNewValue = Double(AVAudioSession.sharedInstance().outputVolume)
-    @State private var currentVolume = AVAudioSession.sharedInstance().outputVolume
     @State private var volumeObserver: NSKeyValueObservation?
+    @State private var bluetoothOutputDevice: AVAudioSessionPortDescription?
     var body: some View {
         VStack {
             if let media = audioPlayer.media {
@@ -303,21 +303,8 @@ struct _NowPlayingContentView: View {
                                     Image(systemName: "speaker.fill")
                                         .font(.system(size: 14))
                                         .opacity(0.6)
-                                    ZStack {
-                                        if isShowingControls || alwaysShowControls {
-                                            // Let iOS show system volume view when controls
-                                            // are not visible
-                                            GenericUIViewRepresentable(view: volumeView)
-                                                .offset(x: 1000, y: 1000)
-                                                .frame(width: 10, height: 10)
-                                        }
-                                        Slider(value: $volumeDragingNewValue) { isEditing in
-                                            isVolumeDraging = isEditing
-                                            if !isEditing {
-                                                let slider = volumeView.subviews.first(where: { $0 is UISlider }) as! UISlider
-                                                slider.value = Float(volumeDragingNewValue)
-                                            }
-                                        }
+                                    Slider(value: systemVolumeBinding) { isEditing in
+                                        isVolumeDraging = isEditing
                                     }
                                     .sliderThumbVisibility(.hidden)
                                     .tint(.white)
@@ -333,15 +320,32 @@ struct _NowPlayingContentView: View {
                                     Spacer()
                                     Rectangle()
                                         .fill(Color.clear)
-                                        .frame(width: 35, height: 35)
+                                        .frame(width: 35, height: 30)
                                     Spacer()
                                     GenericUIViewRepresentable(view: {
                                         let view = AVRoutePickerView()
                                         view.tintColor = UIColor(white: 1, alpha: 0.6)
                                         view.activeTintColor = UIColor(white: 1, alpha: 0.6)
+                                        let customButton = UIButton()
+                                        let imageName = bluetoothOutputDevice != nil
+                                        ? "airpods.pro" : "airplay.audio"
+                                        customButton.setImage(UIImage(
+                                            systemName: imageName,
+                                            withConfiguration: UIImage.SymbolConfiguration(pointSize: 20)
+                                        ), for: .normal)
+                                        view.setValue(customButton, forKey: "customButton")
                                         return view
-                                    }())
-                                    .frame(width: 50, height: 50)
+                                    }()) { view in
+                                        let customButton = UIButton()
+                                        let imageName = bluetoothOutputDevice != nil
+                                        ? "airpods.pro" : "airplay.audio"
+                                        customButton.setImage(UIImage(
+                                            systemName: imageName,
+                                            withConfiguration: UIImage.SymbolConfiguration(pointSize: 20)
+                                        ), for: .normal)
+                                        view.setValue(customButton, forKey: "customButton")
+                                    }
+                                    .frame(width: 50, height: 30)
                                     Spacer()
                                     Button {
                                         var transaction = Transaction()
@@ -368,11 +372,20 @@ struct _NowPlayingContentView: View {
                                     }
                                     .buttonStyle(.plain)
                                     .font(.system(size: 20))
-                                    .frame(width: 35, height: 35)
+                                    .frame(width: 35, height: 30)
                                     Spacer()
                                 }
+                                HStack {
+                                    Spacer()
+                                    Text(bluetoothOutputDevice?.portName ?? "")
+                                        .font(.system(size: 11, weight: .semibold))
+                                        .lineLimit(1)
+                                        .opacity(0.6)
+                                    Spacer()
+                                }
+                                .fixedSize(horizontal: false, vertical: true)
                             }
-                            .padding(.bottom, 40)
+                            .padding(.bottom, 30)
                             .offset(y: areControlsVisible ? 0 : 72)
                         }
                     }
@@ -401,17 +414,27 @@ struct _NowPlayingContentView: View {
             isShowingControls = true
             resetMenuDismissTimer()
             UIApplication.shared.isIdleTimerDisabled = true
+            updateSystemVolumeViewVisibility(areControlsVisible)
             volumeObserver = AVAudioSession.sharedInstance().observe(\.outputVolume, options: .new) { _, observedValue in
-                if let newValue = observedValue.newValue {
-                    currentVolume = newValue
+                guard let newValue = observedValue.newValue else { return }
+                
+                Task { @MainActor in
                     if !isVolumeDraging {
-                        volumeDragingNewValue = Double(newValue)
+                        withAnimation(.easeOut(duration: 0.2)) {
+                            volumeDragingNewValue = Double(newValue)
+                        }
                     }
                 }
             }
+            updateBluetoothOutputDevice()
         }
         .onDisappear {
             UIApplication.shared.isIdleTimerDisabled = false
+            volumeObserver = nil
+            volumeView.removeFromSuperview()
+        }
+        .onChange(of: areControlsVisible) { _, areControlsVisible in
+            updateSystemVolumeViewVisibility(areControlsVisible)
         }
         .onChange(of: audioPlayer.isPlaying) { _, isPlaying in
             if isPlaying && areControlsVisible {
@@ -429,6 +452,9 @@ struct _NowPlayingContentView: View {
                 }
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: AVAudioSession.routeChangeNotification)) { _ in
+            updateBluetoothOutputDevice()
+        }
     }
     
     var displayedPlaybackTime: TimeInterval {
@@ -443,6 +469,69 @@ struct _NowPlayingContentView: View {
     }
     var areControlsVisible: Bool {
         isShowingControls || alwaysShowControls
+    }
+    var systemVolumeBinding: Binding<Double> {
+        Binding {
+            volumeDragingNewValue
+        } set: { newValue in
+            volumeDragingNewValue = newValue
+            setSystemVolume(newValue)
+        }
+    }
+    
+    private func updateSystemVolumeViewVisibility(_ isVisible: Bool) {
+        guard isVisible else {
+            volumeView.removeFromSuperview()
+            return
+        }
+        guard let window = sceneDelegate.windowScene?.keyWindow else { return }
+        
+        if volumeView.superview !== window {
+            volumeView.removeFromSuperview()
+            volumeView.setVolumeThumbImage(UIImage(), for: .normal)
+            volumeView.setVolumeThumbImage(UIImage(), for: .highlighted)
+            volumeView.setMinimumVolumeSliderImage(UIImage(), for: .normal)
+            volumeView.setMaximumVolumeSliderImage(UIImage(), for: .normal)
+            volumeView.frame = CGRect(
+                x: 0,
+                y: window.bounds.maxY - 1,
+                width: window.bounds.width,
+                height: 1
+            )
+            volumeView.autoresizingMask = [.flexibleWidth, .flexibleTopMargin]
+            window.addSubview(volumeView)
+            volumeView.layoutIfNeeded()
+            
+            for routeButton in volumeView.subviews.compactMap({ $0 as? UIButton }) {
+                routeButton.isHidden = true
+            }
+        }
+    }
+    
+    private func setSystemVolume(_ value: Double) {
+        guard let slider = volumeView.subviews.first(where: { $0 is UISlider }) as? UISlider else {
+            return
+        }
+        
+        slider.value = Float(value)
+        slider.sendActions(for: .valueChanged)
+    }
+    
+    private func updateBluetoothOutputDevice() {
+        let session = AVAudioSession.sharedInstance()
+        var didSetNewDevice = false
+        for output in session.currentRoute.outputs {
+            if output.portType == .bluetoothA2DP
+                || output.portType == .bluetoothHFP
+                || output.portType == .bluetoothLE {
+                bluetoothOutputDevice = output
+                didSetNewDevice = true
+                break
+            }
+        }
+        if !didSetNewDevice {
+            bluetoothOutputDevice = nil
+        }
     }
     
     struct WaitingDotsView: View {
@@ -950,7 +1039,6 @@ private struct LyricsView: View {
             .opacity( // performance: lazy
                 isVisible || isCurrent ? 1 : 0
             )
-            .animation(.smooth, value: isShowingWaitingProgress)
             .animation(.easeOut(duration: 0.2), value: isPressed)
             .onChange(of: lineHeights) {
                 updateOffset()
@@ -977,6 +1065,8 @@ private struct LyricsView: View {
                     withAnimation(.smooth) {
                         updateOffset()
                     }
+                } else if isProgrammaticScrolling {
+                    isOffsetUpdatePending = false
                 } else if showingFullContent {
                     if isOnScreen {
                         isOffsetUpdatePending = true
@@ -1200,14 +1290,22 @@ private struct TranscriptionTextView: View {
     }
 }
 
-@_effects(readnone)
 private func formattedTime(from seconds: Double) -> String {
-    if seconds.isNaN {
-        return "00:00"
+    guard seconds.isFinite else {
+        return "0:00"
     }
-    let minutes = Int(seconds) / 60
-    let remainingSeconds = Int(seconds) % 60
-    return String(format: "%02d:%02d", minutes, remainingSeconds)
+    
+    let totalSeconds = max(0, Int(seconds))
+    let minutes = totalSeconds / 60
+    let remainingSeconds = totalSeconds % 60
+    
+    guard totalSeconds >= 60 * 60 else {
+        return String(format: "%d:%02d", minutes, remainingSeconds)
+    }
+    
+    let hours = minutes / 60
+    let remainingMinutes = minutes % 60
+    return String(format: "%d:%02d:%02d", hours, remainingMinutes, remainingSeconds)
 }
 
 struct CustomProgressView: View {

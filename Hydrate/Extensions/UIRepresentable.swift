@@ -9,10 +9,19 @@ import SwiftUI
 
 struct GenericUIViewRepresentable: UIViewRepresentable {
     var view: UIView
+    var updateView: (UIView) -> Void
+    
+    init(view: UIView, updateView: @escaping (UIView) -> Void = { _ in }) {
+        self.view = view
+        self.updateView = updateView
+    }
+    
     func makeUIView(context: Context) -> some UIView {
         view
     }
-    func updateUIView(_ uiView: UIViewType, context: Context) {}
+    func updateUIView(_ uiView: UIViewType, context: Context) {
+        updateView(uiView)
+    }
 }
 
 struct GenericUIViewControllerRepresentable: UIViewControllerRepresentable {
